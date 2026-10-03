@@ -1,0 +1,5 @@
+firmware/build/
+*.elf
+*.bin
+*.hex
+*.o
