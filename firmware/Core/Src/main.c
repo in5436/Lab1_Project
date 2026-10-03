@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,7 +60,10 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int _write(int fd, char *p, int n) {
+  HAL_UART_Transmit(&huart2, (uint8_t*)p, n, HAL_MAX_DELAY);
+  return n;
+}
 /* USER CODE END 0 */
 
 /**
@@ -105,6 +108,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5); 
+    printf("tick %lu\r\n", HAL_GetTick()); 
+    HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
