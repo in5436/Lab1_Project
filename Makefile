@@ -1,6 +1,14 @@
-IMAGE ?= stm32-build
+IMAGE ?= rack-monitor-build:local
 
-build:
-	docker run --rm -v $(PWD):/workspace -w /workspace \
-	--user $(shell id -u):$(shell id -g) $(IMAGE) \
-	make -C firmware all
+.PHONY: image build clean
+
+image:
+	docker build -t $(IMAGE) docker/
+
+build: image
+	docker run --rm -v "$(CURDIR):/workspace" -w /workspace \
+		--user "$(shell id -u):$(shell id -g)" $(IMAGE) \
+		make -C firmware all
+
+clean:
+	$(MAKE) -C firmware clean
