@@ -36,6 +36,9 @@ BUILD_DIR = build
 ######################################
 # C sources
 C_SOURCES =  \
+Platform/platform.c \
+Devices/mpu6050.c \
+App/rack_monitor.c \
 Core/Src/main.c \
 Core/Src/stm32c0xx_it.c \
 Core/Src/stm32c0xx_hal_msp.c \
@@ -121,6 +124,11 @@ AS_INCLUDES =
 # C includes
 C_INCLUDES =  \
 -ICore/Inc \
+-IPlatform \
+-IDevices \
+-IApp \
+-IDrivers/STM32C0xx_HAL_Driver/Inc \
+-ICore/Inc \
 -IDrivers/STM32C0xx_HAL_Driver/Inc \
 -IDrivers/STM32C0xx_HAL_Driver/Inc/Legacy \
 -IDrivers/CMSIS/Device/ST/STM32C0xx/Include \
@@ -139,6 +147,8 @@ endif
 
 # Generate dependency information
 CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
+
+$(BUILD_DIR)/main.o $(BUILD_DIR)/platform.o $(BUILD_DIR)/mpu6050.o $(BUILD_DIR)/rack_monitor.o: CFLAGS += -Wextra
 
 
 #######################################

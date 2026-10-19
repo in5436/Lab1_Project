@@ -22,6 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <stdio.h>
+#include "platform.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,7 +65,8 @@ static void MX_ADC1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 int _write(int fd, char *p, int n) {
-  HAL_UART_Transmit(&huart2, (uint8_t*)p, n, HAL_MAX_DELAY);
+  (void)fd;
+  HAL_UART_Transmit(&huart2, (uint8_t*)p, (uint16_t)n, HAL_MAX_DELAY);
   return n;
 }
 /* USER CODE END 0 */
@@ -101,7 +104,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-
+  Platform_Init(&huart2, &hi2c1, &hadc1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -111,9 +114,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5); 
-    printf("tick %lu\r\n", HAL_GetTick()); 
-    HAL_Delay(1000);
+    Platform_Step();
   }
   /* USER CODE END 3 */
 }
