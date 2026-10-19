@@ -81,7 +81,7 @@
   $$T_{\text{bit}} = \frac{1}{115\,107.91} \approx \mathbf{8.687\text{ мкс}},\quad T_{\text{frame (10 bit)}} \approx \mathbf{86.87\text{ мкс}}.$$
 
 ### 4.3. Модуль `ADC1` (Канал `IN0`, 12 біт)
-* **Тактування:** `ADC_CLOCK_SYNC_PCLK_DIV2` $\Rightarrow f_{\text{ADC}} = \frac{48\text{ МГц}}{2} = \mathbf{24\text{ МГц}}$ ($T_{\text{ADC\_CLK}} = 41.67\text{ нс}$).
+* **Тактування:** `ADC_CLOCK_SYNC_PCLK_DIV2` $\Rightarrow f_{\text{ADC}} = \frac{48\text{ МГц}}{2} = \mathbf{24\text{ МГц}}$ ($T_{\text{ADC\\_CLK}} = 41.67\text{ нс}$).
 * **Час вибірки та перетворення:** `SamplingTimeCommon1 = ADC_SAMPLETIME_1CYCLE_5` (`1.5 циклу`), час квантування 12-бітного SAR-ядра = `12.5 циклів`:
   $$T_{\text{conv}} = \frac{1.5 + 12.5}{24\text{ МГц}} = \frac{14}{24\text{ МГц}} \approx \mathbf{0.583\text{ мкс}}.$$
 * Імпульс на маркерному піні `PA4` (`ADC_CONV_MARK`) охоплює повний цикл викликів `HAL_ADC_Start()`, `HAL_ADC_PollForConversion()`, `HAL_ADC_GetValue()` та `HAL_ADC_Stop()`, тому його фактична тривалість на записі логічного аналізатора визначається часом виконання функцій HAL (близько кількох десятків мікросекунд).
