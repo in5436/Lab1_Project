@@ -54,7 +54,7 @@ void rack_monitor_clear_alarms(rack_monitor_t *mon)
 int16_t rack_monitor_adc_to_deci_c(uint16_t adc_raw)
 {
     uint32_t clamped = (adc_raw > 4095U) ? 4095U : (uint32_t)adc_raw;
-    return (int16_t)((clamped * 1000UL) / 4095UL);
+    return (int16_t)((clamped * 3300UL) / 4095UL);
 }
 
 bool rack_monitor_check_shock(const mpu6050_accel_mg_t *accel, uint16_t threshold_mg, uint32_t *mag_sq_out)
