@@ -1,4 +1,5 @@
-CC = gcc
+CC ?= gcc
+GCOV ?= gcov
 CFLAGS = -Wall -Wextra -g -I../firmware/App -I../firmware/Devices -I. -fprofile-arcs -ftest-coverage
 LDFLAGS = -fprofile-arcs -ftest-coverage
 
@@ -21,7 +22,7 @@ run: $(EXEC)
 
 coverage: run
 	@echo "\n=== Code Coverage Report ==="
-	gcov-9 -b rack_monitor.c mpu6050.c
+	$(GCOV) -b rack_monitor.c mpu6050.c
 
 check-deps:
 	@echo "=== Checking Architecture Dependencies ==="
