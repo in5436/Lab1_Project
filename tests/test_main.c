@@ -35,6 +35,11 @@ void test_mpu6050_driver() {
 
     printf("Running test_mpu6050_driver...\n");
 
+    assert(mpu6050_read_id(NULL, &who_am_i) == MPU6050_ERR_PARAM);
+    assert(mpu6050_init(NULL, &bus, 0x68) == MPU6050_ERR_PARAM);
+    assert(mpu6050_read_accel_mg(NULL, NULL, NULL) == MPU6050_ERR_PARAM);
+    assert(mpu6050_convert_raw_to_mg(NULL, NULL) == MPU6050_ERR_PARAM);
+
     fake_who_am_i_response = 0x68;
     assert(mpu6050_init(&dev, &bus, 0x68) == MPU6050_OK);
     assert(mpu6050_read_id(&dev, &who_am_i) == MPU6050_OK);
@@ -43,12 +48,9 @@ void test_mpu6050_driver() {
     fake_who_am_i_response = 0xFF;
     assert(mpu6050_read_id(&dev, &who_am_i) == MPU6050_ERR_ID);
 
-    fake_accel_regs[0] = 0x00; fake_accel_regs[1] = 0x00; 
-    fake_accel_regs[2] = 0x00; fake_accel_regs[3] = 0x00; 
-    fake_accel_regs[4] = 0x40; fake_accel_regs[5] = 0x00; 
-    
+    uint8_t logic_analyzer_vector[6] = {0x00, 0x00, 0x00, 0x00, 0x40, 0x00};
     mpu6050_accel_mg_t acc;
-    assert(mpu6050_read_accel_mg(&dev, &acc, NULL) == MPU6050_OK);
+    assert(mpu6050_convert_raw_to_mg(logic_analyzer_vector, &acc) == MPU6050_OK);
     assert(acc.x_mg == 0);
     assert(acc.y_mg == 0);
     assert(acc.z_mg >= 999 && acc.z_mg <= 1001);
@@ -65,17 +67,21 @@ void test_rack_monitor_logic() {
 
     printf("Running test_rack_monitor_logic...\n");
 
+    rack_monitor_init(NULL); 
+    assert(rack_monitor_update(NULL, 0, &acc, true, 0, 0) == RACK_ALARM_NONE);
+
     rack_monitor_init(&mon);
-    
     assert(rack_monitor_adc_to_deci_c(500) == 402); 
 
     alarm = rack_monitor_update(&mon, 100, &acc, true, 500, 0);
     assert(alarm == RACK_ALARM_NONE);
     assert(mon.door_stable_state == 0);
+    assert(rack_monitor_get_led_state(&mon, 100) == false); 
 
     alarm = rack_monitor_update(&mon, 200, &acc, true, 4095, 0);
     assert((alarm & RACK_ALARM_HIGH_TEMP) != 0);
     assert(mon.alarm_latched == true);
+    assert(rack_monitor_get_led_state(&mon, 200) == true); 
 
     alarm = rack_monitor_update(&mon, 210, &acc, true, 4095, 0);
     assert((alarm & RACK_ALARM_HIGH_TEMP) == 0); 
@@ -85,6 +91,18 @@ void test_rack_monitor_logic() {
     
     alarm = rack_monitor_update(&mon, 360, &acc, true, 500, 1);
     assert((alarm & RACK_ALARM_DOOR_OPENED) != 0);
+
+    rack_monitor_clear_alarms(&mon);
+    assert(mon.alarm_latched == false);
+
+    rack_monitor_set_mode(&mon, RACK_MODE_MAINTENANCE);
+    assert(mon.mode == RACK_MODE_MAINTENANCE);
+    
+    alarm = rack_monitor_update(&mon, 10000, &acc, true, 4095, 1);
+    assert(alarm == RACK_ALARM_NONE);
+    
+    assert(rack_monitor_get_led_state(&mon, 1000) == true);
+    assert(rack_monitor_get_led_state(&mon, 1500) == false);
 }
 
 int main(void) {
