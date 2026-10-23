@@ -8,6 +8,15 @@ static uint8_t fake_who_am_i_response = 0x68;
 static uint8_t fake_accel_regs[6] = {0};
 static bus_status_t fake_bus_status = BUS_OK;
 
+typedef struct {
+    uint8_t dev_addr;
+    uint8_t reg_addr;
+    uint8_t value;
+} fake_write_call_t;
+
+static fake_write_call_t fake_writes[4];
+static uint8_t fake_write_count = 0U;
+
 bus_status_t fake_read(void *ctx, uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len) {
     (void)ctx; (void)dev_addr;
     if (fake_bus_status != BUS_OK) return fake_bus_status;
@@ -24,8 +33,22 @@ bus_status_t fake_read(void *ctx, uint8_t dev_addr, uint8_t reg_addr, uint8_t *d
 }
 
 bus_status_t fake_write(void *ctx, uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len) {
-    (void)ctx; (void)dev_addr; (void)reg_addr; (void)data; (void)len;
-    return fake_bus_status; 
+    (void)ctx;
+
+    if (fake_bus_status != BUS_OK) {
+        return fake_bus_status;
+    }
+
+    if ((data == NULL) || (len != 1U) || (fake_write_count >= 4U)) {
+        return BUS_ERR_PARAM;
+    }
+
+    fake_writes[fake_write_count].dev_addr = dev_addr;
+    fake_writes[fake_write_count].reg_addr = reg_addr;
+    fake_writes[fake_write_count].value = data[0];
+    fake_write_count++;
+
+    return BUS_OK;
 }
 
 void test_mpu6050_driver() {
@@ -41,7 +64,30 @@ void test_mpu6050_driver() {
     assert(mpu6050_convert_raw_to_mg(NULL, NULL) == MPU6050_ERR_PARAM);
 
     fake_who_am_i_response = 0x68;
+    fake_write_count = 0U;
     assert(mpu6050_init(&dev, &bus, 0x68) == MPU6050_OK);
+
+    const uint8_t expected_regs[4] = {
+        MPU6050_REG_PWR_MGMT_1,
+        MPU6050_REG_CONFIG,
+        MPU6050_REG_SMPLRT_DIV,
+        MPU6050_REG_ACCEL_CFG
+    };
+
+    const uint8_t expected_values[4] = {
+        0x00U,
+        0x03U,
+        0x09U,
+        0x00U
+    };
+
+    assert(fake_write_count == 4U);
+
+    for (uint8_t i = 0U; i < 4U; i++) {
+        assert(fake_writes[i].dev_addr == MPU6050_ADDR_DEFAULT);
+        assert(fake_writes[i].reg_addr == expected_regs[i]);
+        assert(fake_writes[i].value == expected_values[i]);
+    }
     assert(mpu6050_read_id(&dev, &who_am_i) == MPU6050_OK);
     assert(who_am_i == 0x68);
 
@@ -58,6 +104,21 @@ void test_mpu6050_driver() {
     fake_bus_status = BUS_ERR_NACK;
     assert(mpu6050_read_accel_mg(&dev, &acc, NULL) == MPU6050_ERR_BUS);
     fake_bus_status = BUS_OK; 
+
+    memcpy(fake_accel_regs, logic_analyzer_vector, 6U);
+
+    uint8_t raw_readback[6] = {0};
+
+    assert(mpu6050_read_accel_mg(&dev, &acc, raw_readback) == MPU6050_OK);
+    assert(memcmp(raw_readback, logic_analyzer_vector, 6U) == 0);
+    assert(acc.x_mg == 0);
+    assert(acc.y_mg == 0);
+    assert(acc.z_mg == 1000);
+
+    fake_bus_status = BUS_ERR_TIMEOUT;
+    assert(mpu6050_read_id(&dev, &who_am_i) == MPU6050_ERR_BUS);
+    assert(mpu6050_read_accel_mg(&dev, &acc, NULL) == MPU6050_ERR_BUS);
+    fake_bus_status = BUS_OK;
 }
 
 void test_rack_monitor_logic() {
@@ -82,7 +143,9 @@ void test_rack_monitor_logic() {
                                     RACK_DEFAULT_SHOCK_DELTA_MG,
                                     NULL) == true);
 
-    assert(rack_monitor_adc_to_deci_c(500) == 402); 
+    assert(rack_monitor_adc_to_deci_c(500) == 402); \
+
+    assert(rack_monitor_adc_to_deci_c(312) == 251);
 
     alarm = rack_monitor_update(&mon, 100, &acc, true, 500, 0);
     assert(alarm == RACK_ALARM_NONE);
@@ -99,6 +162,9 @@ void test_rack_monitor_logic() {
 
     alarm = rack_monitor_update(&mon, 300, &acc, true, 500, 1);
     assert((alarm & RACK_ALARM_DOOR_OPENED) == 0); 
+
+    alarm = rack_monitor_update(&mon, 340, &acc, true, 500, 1);
+    assert((alarm & RACK_ALARM_DOOR_OPENED) == 0);
     
     alarm = rack_monitor_update(&mon, 360, &acc, true, 500, 1);
     assert((alarm & RACK_ALARM_DOOR_OPENED) != 0);
@@ -114,6 +180,17 @@ void test_rack_monitor_logic() {
     
     assert(rack_monitor_get_led_state(&mon, 1000) == true);
     assert(rack_monitor_get_led_state(&mon, 1500) == false);
+
+    rack_monitor_init(&mon);
+
+    alarm = rack_monitor_update(&mon, 100U, &acc, true, 4095U, 0U);
+    assert((alarm & RACK_ALARM_HIGH_TEMP) != 0U);
+
+    alarm = rack_monitor_update(&mon, 5099U, &acc, true, 4095U, 0U);
+    assert((alarm & RACK_ALARM_HIGH_TEMP) == 0U);
+
+    alarm = rack_monitor_update(&mon, 5100U, &acc, true, 4095U, 0U);
+    assert((alarm & RACK_ALARM_HIGH_TEMP) != 0U);
 }
 
 int main(void) {
