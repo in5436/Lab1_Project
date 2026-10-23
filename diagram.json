@@ -22,7 +22,7 @@
       "id": "temp1",
       "top": 95,
       "left": -170,
-      "attrs": { "value": "250" }
+      "attrs": { "value": "78" }
     },
     {
       "type": "wokwi-pushbutton",
