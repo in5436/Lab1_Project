@@ -166,20 +166,21 @@ static bus_status_t platform_i2c_read_regs(void *ctx, uint8_t dev_addr, uint8_t 
     return BUS_OK;
 }
 
-static uint16_t platform_read_adc_marked(void)
+static bool platform_read_adc_marked(uint16_t *val)
 {
-    uint16_t val = 0U;
+    bool ok = false;
 
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
     if (HAL_ADC_Start(s_hadc) == HAL_OK) {
         if (HAL_ADC_PollForConversion(s_hadc, 10U) == HAL_OK) {
-            val = (uint16_t)HAL_ADC_GetValue(s_hadc);
+            *val = (uint16_t)HAL_ADC_GetValue(s_hadc);
+            ok = true;
         }
         (void)HAL_ADC_Stop(s_hadc);
     }
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 
-    return val;
+    return ok;
 }
 
 static uint8_t platform_read_door_pin(void)
@@ -263,6 +264,7 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
     uint8_t raw[6] = {0};
     int16_t temp_dc;
     uint8_t door_state;
+    bool adc_ok;
 
     s_huart = huart;
     s_hi2c  = hi2c;
@@ -290,11 +292,15 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
                (unsigned int)s_imu.last_who_am_i);
     }
 
-    s_last_adc_raw = platform_read_adc_marked();
-    temp_dc = rack_monitor_adc_to_deci_c(s_last_adc_raw);
-    s_monitor.last_temp_deci_c = temp_dc;
-    printf("[SELF-TEST] LM35_ADC ch=IN0 raw=%u temp=%d.%dC status=OK\r\n",
-           (unsigned int)s_last_adc_raw, (int)(temp_dc / 10), (int)(temp_dc % 10));
+     adc_ok = platform_read_adc_marked(&s_last_adc_raw);
+    if (adc_ok) {
+        temp_dc = rack_monitor_adc_to_deci_c(s_last_adc_raw);
+        s_monitor.last_temp_deci_c = temp_dc;
+        printf("[SELF-TEST] LM35_ADC ch=IN0 raw=%u temp=%d.%dC status=OK\r\n",
+               (unsigned int)s_last_adc_raw, (int)(temp_dc / 10), (int)(temp_dc % 10));
+    } else {
+        printf("[SELF-TEST] LM35_ADC ch=IN0 status=FAIL\r\n");
+    }
 
     door_state = platform_read_door_pin();
     s_monitor.door_raw_prev = door_state;
@@ -302,7 +308,8 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
     printf("[SELF-TEST] DOOR_SW pin=PA1 level=%u state=%s status=OK\r\n",
            (unsigned int)door_state, (door_state != 0U) ? "OPEN" : "CLOSED");
 
-    printf("System Init OK | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack\r\n");
+    printf("System Init %s | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack\r\n",
+           ((imu_st == MPU6050_OK) && adc_ok) ? "OK" : "FAIL");
 }
 
 void Platform_Step(void)
@@ -317,8 +324,9 @@ void Platform_Step(void)
 
     if ((now - s_last_adc_ms) >= ADC_POLL_PERIOD_MS) {
         s_last_adc_ms = now;
-        s_last_adc_raw = platform_read_adc_marked();
-        need_update = true;
+        if (platform_read_adc_marked(&s_last_adc_raw)) {
+            need_update = true;
+        }
     }
 
     if ((now - s_last_imu_ms) >= IMU_POLL_PERIOD_MS) {
