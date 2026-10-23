@@ -87,11 +87,6 @@ bool rack_monitor_check_shock(const mpu6050_accel_mg_t *accel, uint16_t threshol
         return true;
     }
 
-    if ((x >= (int32_t)threshold_mg) || (x <= -(int32_t)threshold_mg) ||
-        (y >= (int32_t)threshold_mg) || (y <= -(int32_t)threshold_mg)) {
-        return true;
-    }
-
     return false;
 }
 

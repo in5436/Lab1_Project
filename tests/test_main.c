@@ -65,12 +65,23 @@ void test_rack_monitor_logic() {
     mpu6050_accel_mg_t acc = {0, 0, 1000}; 
     uint8_t alarm;
 
+    mpu6050_accel_mg_t resting_on_x = {1000, 0, 0};
+    mpu6050_accel_mg_t shock_on_x = {1600, 0, 0};
+
     printf("Running test_rack_monitor_logic...\n");
 
     rack_monitor_init(NULL); 
     assert(rack_monitor_update(NULL, 0, &acc, true, 0, 0) == RACK_ALARM_NONE);
 
     rack_monitor_init(&mon);
+    assert(rack_monitor_check_shock(&resting_on_x,
+                                    RACK_DEFAULT_SHOCK_DELTA_MG,
+                                    NULL) == false);
+
+    assert(rack_monitor_check_shock(&shock_on_x,
+                                    RACK_DEFAULT_SHOCK_DELTA_MG,
+                                    NULL) == true);
+
     assert(rack_monitor_adc_to_deci_c(500) == 402); 
 
     alarm = rack_monitor_update(&mon, 100, &acc, true, 500, 0);
