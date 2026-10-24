@@ -37,32 +37,43 @@ tests/
 
 ## 2. Component diagram і напрямки залежностей
 
+
+**Компоненти прошивки та їхні залежності:**
+
 ```mermaid
 flowchart TB
-    subgraph Firmware["Прошивка STM32C031C6"]
-        CORE["Core: main, CubeMX init, IRQ"]
-        PLATFORM["Platform: STM32 adapters, polling, UART"]
-        APP["App: rack_monitor"]
-        MPU["Devices: mpu6050"]
-        BUS["Інтерфейс: reg_bus_t"]
-        HAL["Drivers: STM32 HAL / CMSIS"]
+    CORE["Core<br/>main, CubeMX, IRQ"]
+    PLATFORM["Platform<br/>STM32 adapters, polling, UART"]
+    APP["App<br/>rack_monitor"]
+    MPU["Devices<br/>mpu6050"]
+    HAL["Drivers<br/>STM32 HAL / CMSIS"]
+    BUS["Інтерфейс<br/>reg_bus_t"]
 
-        CORE -->|викликає| PLATFORM
-        CORE -->|ініціалізація| HAL
-        PLATFORM -->|викликає| APP
-        PLATFORM -->|ініціалізація та читання| MPU
-        PLATFORM -->|GPIO, ADC, UART, I2C| HAL
-        APP -->|типи прискорення| MPU
-        MPU -->|read_regs / write_regs| BUS
-        PLATFORM -.->|надає реалізації callback| BUS
-    end
+    CORE -->|викликає| PLATFORM
+    CORE -->|ініціалізує| HAL
+    PLATFORM -->|викликає| APP
+    PLATFORM -->|читання датчика| MPU
+    PLATFORM -->|GPIO, ADC, UART, I²C| HAL
+    APP -->|типи прискорення| MPU
+    MPU -->|read_regs / write_regs| BUS
+    PLATFORM -.->|реалізація callback| BUS
 
-    TESTS["tests: host GCC, fake bus, assert"]
-    TESTS -->|перевіряє| MPU
-    TESTS -->|перевіряє| APP
+    linkStyle 7 stroke-width:3px,stroke-dasharray:8 5
 ```
 
-Суцільні стрілки показують використання компонентів, пунктирна — надання реалізації інтерфейсу. Залежність `App → Devices` тут **обмежена типами даних**: `rack_monitor.h` включає `mpu6050.h`, щоб працювати зі структурою `mpu6050_accel_mg_t`. Це не дає прикладній логіці доступу до HAL або периферійних регістрів.
+**Перевірка модулів на хості:**
+
+```mermaid
+flowchart LR
+    TESTS["tests<br/>GCC, fake bus, assert"]
+    APP["App<br/>rack_monitor"]
+    MPU["Devices<br/>mpu6050"]
+
+    TESTS -->|перевіряє| APP
+    TESTS -->|перевіряє| MPU
+```
+
+На основній діаграмі суцільні стрілки відображають виклики та використання компонентів, а пунктирна — надання реалізації callback-функцій для `reg_bus_t`. Окрема схема показує хостове тестування модулів `App` і `Devices` без використання STM32 HAL. Залежність `App → Devices` тут **обмежена типами даних**: `rack_monitor.h` включає `mpu6050.h`, щоб працювати зі структурою `mpu6050_accel_mg_t`. Це не дає прикладній логіці доступу до HAL або периферійних регістрів.
 
 Ключове правило проєкту — **`App/` і `Devices/` не включають `main.h`, `platform.h` чи STM32 HAL-заголовки**. Саме тому їх можна компілювати й тестувати на хості. На відміну від них, `Platform/` та згенерований `Core/` мають право залежати від HAL і конфігурації плати.
 
