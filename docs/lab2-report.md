@@ -254,13 +254,14 @@ flowchart TB
 ## Матеріали
 
 1. [Репозиторій Server Rack Health Monitor, гілка `lab-2`](https://github.com/in5436/Lab1_Project/tree/lab-2).
-2. [Pinout, електричні параметри та розрахунки](pinout.md).
-3. [Архітектура, діаграма компонентів і правила залежностей](architecture.md).
-4. [Аналіз записів PulseView та виміряних параметрів](captures/analysis.md); [основний VCD](captures/wokwi.vcd); [VCD аномалії NACK](captures/fault-nack.vcd).
-5. [Продуктові вимоги (PRD)](PRD.md); [аналіз апаратних компонентів](hardware-components.md).
-6. [STM32C031C6 — технічні матеріали STMicroelectronics](https://www.st.com/en/microcontrollers-microprocessors/stm32c031c6.html): datasheet **DS13867**, reference manual **RM0490**; посилання на таблиці — у `pinout.md`.
-7. [NUCLEO-C031C6 — сторінка плати STMicroelectronics](https://www.st.com/en/evaluation-tools/nucleo-c031c6.html), user manual **UM2953**.
-8. [MPU-6000/MPU-6050 Register Map and Descriptions](https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf), Rev. 4.2; [MPU-6000/MPU-6050 Datasheet](https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf).
-9. [Texas Instruments LM35 Datasheet](https://www.ti.com/lit/ds/symlink/lm35.pdf).
-10. [Wokwi — документація логічного аналізатора](https://docs.wokwi.com/guides/logic-analyzer); [налаштування проєктів Wokwi для VS Code](https://docs.wokwi.com/vscode/project-config).
+2. [Відеозвіт](https://drive.google.com/file/d/1L9l5LwzKF6M3TruYsQgvgRzTYw87alR4/view?usp=sharing).
+3. [Pinout, електричні параметри та розрахунки](pinout.md).
+4. [Архітектура, діаграма компонентів і правила залежностей](architecture.md).
+5. [Аналіз записів PulseView та виміряних параметрів](captures/analysis.md); [основний VCD](captures/wokwi.vcd); [VCD аномалії NACK](captures/fault-nack.vcd).
+6. [Продуктові вимоги (PRD)](PRD.md); [аналіз апаратних компонентів](hardware-components.md).
+7. [STM32C031C6 — технічні матеріали STMicroelectronics](https://www.st.com/en/microcontrollers-microprocessors/stm32c031c6.html): datasheet **DS13867**, reference manual **RM0490**; посилання на таблиці — у `pinout.md`.
+8. [NUCLEO-C031C6 — сторінка плати STMicroelectronics](https://www.st.com/en/evaluation-tools/nucleo-c031c6.html), user manual **UM2953**.
+9. [MPU-6000/MPU-6050 Register Map and Descriptions](https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf), Rev. 4.2; [MPU-6000/MPU-6050 Datasheet](https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf).
+10. [Texas Instruments LM35 Datasheet](https://www.ti.com/lit/ds/symlink/lm35.pdf).
+11. [Wokwi — документація логічного аналізатора](https://docs.wokwi.com/guides/logic-analyzer); [налаштування проєктів Wokwi для VS Code](https://docs.wokwi.com/vscode/project-config).
 
