@@ -226,11 +226,18 @@ static void platform_handle_command(const char *cmd)
         }
         s_imu.dev_addr = MPU6050_ADDR_DEFAULT;
     } else if (strcmp(cmd, "perf") == 0) {
-    uint32_t time_us = perf_now_us();
+        uint32_t time_us = perf_now_us();
 
-    printf("[PERF] tick_ms=%lu timer_us=%lu\r\n",
-           (unsigned long)HAL_GetTick(),
-           (unsigned long)time_us);
+        printf("[PERF] tick_ms=%lu timer_us=%lu\r\n",
+               (unsigned long)HAL_GetTick(),
+               (unsigned long)time_us);
+
+    } else if (strcmp(cmd, "stats reset") == 0) {
+        perf_stats_reset();
+        printf("[STATS] reset=OK\r\n");
+
+    } else if (strcmp(cmd, "stats") == 0) {
+        perf_stats_print();
 
     } else if (strcmp(cmd, "status") == 0) {
         printf("[STATUS] ts=%lu ms mode=%s temp=%d.%dC door=%s ax=%d ay=%d az=%d mg alarms=%lu\r\n",
@@ -250,12 +257,26 @@ static void platform_poll_uart_rx(void)
 {
     uint8_t ch;
 
-    while ((s_huart != NULL) && ((s_huart->Instance->ISR & USART_ISR_RXNE_RXFNE) != 0U)) {
+    while ((s_huart != NULL) &&
+           ((s_huart->Instance->ISR & USART_ISR_RXNE_RXFNE) != 0U)) {
+
         ch = (uint8_t)(s_huart->Instance->RDR & 0xFFU);
+
         if ((ch == '\r') || (ch == '\n')) {
             if (s_cmd_len > 0U) {
+                uint32_t start_us;
+
                 s_cmd_buf[s_cmd_len] = '\0';
-                platform_handle_command(s_cmd_buf);
+
+                if ((strcmp(s_cmd_buf, "stats") == 0) ||
+                    (strcmp(s_cmd_buf, "stats reset") == 0)) {
+                    platform_handle_command(s_cmd_buf);
+                } else {
+                    start_us = perf_now_us();
+                    platform_handle_command(s_cmd_buf);
+                    perf_record(PERF_UART_CMD, start_us);
+                }
+
                 s_cmd_len = 0U;
             }
         } else if (s_cmd_len < (sizeof(s_cmd_buf) - 1U)) {
@@ -318,63 +339,120 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
     printf("[SELF-TEST] DOOR_SW pin=PA1 level=%u state=%s status=OK\r\n",
            (unsigned int)door_state, (door_state != 0U) ? "OPEN" : "CLOSED");
 
-    printf("System Init %s | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack, perf\r\n",
+    printf("System Init %s | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack, perf, stats, stats reset\r\n",
            ((imu_st == MPU6050_OK) && adc_ok) ? "OK" : "FAIL");
 }
 
 void Platform_Step(void)
 {
+    static uint32_t s_last_sample_ms = 0U;
+
     uint32_t now = HAL_GetTick();
+    uint32_t loop_started_us = 0U;
+    uint32_t task_started_us;
+
+    bool sample_loop = (now != s_last_sample_ms);
     bool need_update = false;
     bool imu_ok = s_monitor.imu_online;
+
     mpu6050_accel_mg_t acc = s_monitor.last_accel;
     uint8_t alarms;
+
+    if (sample_loop) {
+        s_last_sample_ms = now;
+        loop_started_us = perf_now_us();
+    }
 
     platform_poll_uart_rx();
 
     if ((now - s_last_adc_ms) >= ADC_POLL_PERIOD_MS) {
         s_last_adc_ms = now;
+
+        task_started_us = perf_now_us();
+
         if (platform_read_adc_marked(&s_last_adc_raw)) {
             need_update = true;
         }
+
+        perf_record(PERF_ADC, task_started_us);
     }
 
     if ((now - s_last_imu_ms) >= IMU_POLL_PERIOD_MS) {
         s_last_imu_ms = now;
+
+        task_started_us = perf_now_us();
+
         if (mpu6050_read_accel_mg(&s_imu, &acc, NULL) == MPU6050_OK) {
             imu_ok = true;
         } else {
             imu_ok = false;
         }
+
+        perf_record(PERF_IMU, task_started_us);
         need_update = true;
     }
 
     if (need_update) {
-        alarms = rack_monitor_update(&s_monitor, now, &acc, imu_ok, s_last_adc_raw, platform_read_door_pin());
+        task_started_us = perf_now_us();
+
+        alarms = rack_monitor_update(
+            &s_monitor,
+            now,
+            &acc,
+            imu_ok,
+            s_last_adc_raw,
+            platform_read_door_pin()
+        );
 
         if ((alarms & RACK_ALARM_SHOCK) != 0U) {
             printf("[ALARM] SHOCK DETECTED | ts=%lu ms ax=%d ay=%d az=%d mg\r\n",
-                   (unsigned long)now, (int)acc.x_mg, (int)acc.y_mg, (int)acc.z_mg);
+                   (unsigned long)now,
+                   (int)acc.x_mg,
+                   (int)acc.y_mg,
+                   (int)acc.z_mg);
         }
+
         if ((alarms & RACK_ALARM_HIGH_TEMP) != 0U) {
             printf("[ALARM] HIGH TEMPERATURE | ts=%lu ms temp=%d.%dC\r\n",
                    (unsigned long)now,
                    (int)(s_monitor.last_temp_deci_c / 10),
                    (int)(s_monitor.last_temp_deci_c % 10));
         }
+
         if ((alarms & RACK_ALARM_DOOR_OPENED) != 0U) {
-            printf("[ALARM] DOOR OPENED | ts=%lu ms pin=PA1\r\n", (unsigned long)now);
+            printf("[ALARM] DOOR OPENED | ts=%lu ms pin=PA1\r\n",
+                   (unsigned long)now);
         }
+
         if ((alarms & RACK_ALARM_SENSOR_FAULT) != 0U) {
-            printf("[FAULT] MPU6050 I2C ERROR | ts=%lu ms\r\n", (unsigned long)now);
+            printf("[FAULT] MPU6050 I2C ERROR | ts=%lu ms\r\n",
+                   (unsigned long)now);
         }
+
+        perf_record(PERF_LOGIC, task_started_us);
     }
 
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,
-                      rack_monitor_get_led_state(&s_monitor, now) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    if (sample_loop) {
+        task_started_us = perf_now_us();
+    }
+
+    HAL_GPIO_WritePin(
+        GPIOA,
+        GPIO_PIN_5,
+        rack_monitor_get_led_state(&s_monitor, now)
+            ? GPIO_PIN_SET
+            : GPIO_PIN_RESET
+    );
+
+    if (sample_loop) {
+        perf_record(PERF_LED, task_started_us);
+    }
 
     if ((now - s_last_telemetry_ms) >= TELEMETRY_PERIOD_MS) {
         s_last_telemetry_ms = now;
+
+        task_started_us = perf_now_us();
+
         printf("[TELEMETRY] ts=%lu ms mode=%s temp=%d.%dC door=%s ax=%d ay=%d az=%d mg\r\n",
                (unsigned long)now,
                (s_monitor.mode == RACK_MODE_ACTIVE) ? "ACTIVE" : "MAINT",
@@ -384,5 +462,11 @@ void Platform_Step(void)
                (int)s_monitor.last_accel.x_mg,
                (int)s_monitor.last_accel.y_mg,
                (int)s_monitor.last_accel.z_mg);
+
+        perf_record(PERF_TELEMETRY, task_started_us);
+    }
+
+    if (sample_loop) {
+        perf_record(PERF_LOOP, loop_started_us);
     }
 }
