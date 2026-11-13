@@ -18,6 +18,9 @@ typedef struct {
     uint32_t jitter_max_us;
     uint32_t missed;
     uint32_t overruns;
+
+    uint32_t lateness_max_ms;
+    uint32_t deadline_misses;
 } perf_stat_t;
 
 static volatile uint32_t s_tim3_overflows = 0U;
@@ -147,10 +150,6 @@ void perf_record(perf_task_t task, uint32_t started_us)
             if (jitter_us > s->jitter_max_us) {
                 s->jitter_max_us = jitter_us;
             }
-
-            if ((gap_us / expected_us) > 1U) {
-                s->missed += gap_us / expected_us - 1U;
-            }
         }
 
         s->last_start_us = started_us;
@@ -161,13 +160,60 @@ void perf_record(perf_task_t task, uint32_t started_us)
     }
 }
 
+void perf_note_schedule(perf_task_t task,
+                        uint32_t skipped,
+                        uint32_t lateness_ms)
+{
+    perf_stat_t *s;
+
+    if ((unsigned)task >= (unsigned)PERF_TASK_COUNT) {
+        return;
+    }
+
+    if (s_periods_us[task] == 0U) {
+        return;
+    }
+
+    s = &s_stats[task];
+
+    s->missed += skipped;
+
+    if (lateness_ms > s->lateness_max_ms) {
+        s->lateness_max_ms = lateness_ms;
+    }
+}
+
+void perf_note_deadline_miss(perf_task_t task)
+{
+    if ((unsigned)task >= (unsigned)PERF_TASK_COUNT) {
+        return;
+    }
+
+    s_stats[task].deadline_misses++;
+}
+
 void perf_stats_print(void)
 {
     unsigned i;
     uint32_t window_us = perf_now_us() - s_stats_start_us;
 
+    uint64_t work_us =
+    s_stats[PERF_UART_CMD].exec_sum_us +
+    s_stats[PERF_ADC].exec_sum_us +
+    s_stats[PERF_IMU].exec_sum_us +
+    s_stats[PERF_LOGIC].exec_sum_us +
+    s_stats[PERF_TELEMETRY].exec_sum_us;
+
+    uint32_t work_permille = window_us != 0U
+        ? (uint32_t)((work_us * 1000ULL) / window_us)
+        : 0U;
+
     printf("[STATS] window_ms=%lu\r\n",
            (unsigned long)(window_us / 1000U));
+
+    printf("[LOAD] mode=BUSY_LOOP work_min_pct=%lu.%lu\r\n",
+       (unsigned long)(work_permille / 10U),
+       (unsigned long)(work_permille % 10U));
 
     for (i = 0U; i < (unsigned)PERF_TASK_COUNT; ++i) {
         const perf_stat_t *s = &s_stats[i];
@@ -188,15 +234,17 @@ void perf_stats_print(void)
                 ? (uint32_t)(s->interval_sum_us / s->interval_count)
                 : 0U;
 
-            printf("[PERIOD] name=%s n=%lu min_us=%lu avg_us=%lu max_us=%lu jitter_max_us=%lu missed=%lu overruns=%lu\r\n",
-                   s_names[i],
-                   (unsigned long)s->interval_count,
-                   (unsigned long)s->interval_min_us,
-                   (unsigned long)avg_period_us,
-                   (unsigned long)s->interval_max_us,
-                   (unsigned long)s->jitter_max_us,
-                   (unsigned long)s->missed,
-                   (unsigned long)s->overruns);
+            printf("[PERIOD] name=%s n=%lu min_us=%lu avg_us=%lu max_us=%lu jitter_max_us=%lu missed=%lu late_max_ms=%lu deadline_miss=%lu overruns=%lu\r\n",
+                s_names[i],
+                (unsigned long)s->interval_count,
+                (unsigned long)s->interval_min_us,
+                (unsigned long)avg_period_us,
+                (unsigned long)s->interval_max_us,
+                (unsigned long)s->jitter_max_us,
+                (unsigned long)s->missed,
+                (unsigned long)s->lateness_max_ms,
+                (unsigned long)s->deadline_misses,
+                (unsigned long)s->overruns);
         }
     }
 }

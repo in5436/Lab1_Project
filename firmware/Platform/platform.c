@@ -365,8 +365,20 @@ void Platform_Step(void)
 
     platform_poll_uart_rx();
 
+
+    now = HAL_GetTick();
+
     if ((now - s_last_adc_ms) >= ADC_POLL_PERIOD_MS) {
-        s_last_adc_ms = now;
+        uint32_t due =
+            (now - s_last_adc_ms) / ADC_POLL_PERIOD_MS;
+
+        s_last_adc_ms += due * ADC_POLL_PERIOD_MS;
+
+        perf_note_schedule(
+            PERF_ADC,
+            due - 1U,
+            now - s_last_adc_ms
+        );
 
         task_started_us = perf_now_us();
 
@@ -375,10 +387,26 @@ void Platform_Step(void)
         }
 
         perf_record(PERF_ADC, task_started_us);
+
+        if ((int32_t)(HAL_GetTick() -
+            (s_last_adc_ms + ADC_POLL_PERIOD_MS)) > 0) {
+            perf_note_deadline_miss(PERF_ADC);
+        }
     }
 
+    now = HAL_GetTick();
+
     if ((now - s_last_imu_ms) >= IMU_POLL_PERIOD_MS) {
-        s_last_imu_ms = now;
+        uint32_t due =
+            (now - s_last_imu_ms) / IMU_POLL_PERIOD_MS;
+
+        s_last_imu_ms += due * IMU_POLL_PERIOD_MS;
+
+        perf_note_schedule(
+            PERF_IMU,
+            due - 1U,
+            now - s_last_imu_ms
+        );
 
         task_started_us = perf_now_us();
 
@@ -390,6 +418,11 @@ void Platform_Step(void)
 
         perf_record(PERF_IMU, task_started_us);
         need_update = true;
+
+        if ((int32_t)(HAL_GetTick() -
+            (s_last_imu_ms + IMU_POLL_PERIOD_MS)) > 0) {
+            perf_note_deadline_miss(PERF_IMU);
+        }
     }
 
     if (need_update) {
@@ -448,22 +481,38 @@ void Platform_Step(void)
         perf_record(PERF_LED, task_started_us);
     }
 
+    now = HAL_GetTick();
+
     if ((now - s_last_telemetry_ms) >= TELEMETRY_PERIOD_MS) {
-        s_last_telemetry_ms = now;
+        uint32_t due =
+            (now - s_last_telemetry_ms) / TELEMETRY_PERIOD_MS;
+
+        s_last_telemetry_ms += due * TELEMETRY_PERIOD_MS;
+
+        perf_note_schedule(
+            PERF_TELEMETRY,
+            due - 1U,
+            now - s_last_telemetry_ms
+        );
 
         task_started_us = perf_now_us();
 
         printf("[TELEMETRY] ts=%lu ms mode=%s temp=%d.%dC door=%s ax=%d ay=%d az=%d mg\r\n",
-               (unsigned long)now,
-               (s_monitor.mode == RACK_MODE_ACTIVE) ? "ACTIVE" : "MAINT",
-               (int)(s_monitor.last_temp_deci_c / 10),
-               (int)(s_monitor.last_temp_deci_c % 10),
-               (s_monitor.door_stable_state != 0U) ? "OPEN" : "CLOSED",
-               (int)s_monitor.last_accel.x_mg,
-               (int)s_monitor.last_accel.y_mg,
-               (int)s_monitor.last_accel.z_mg);
+                (unsigned long)now,
+                (s_monitor.mode == RACK_MODE_ACTIVE) ? "ACTIVE" : "MAINT",
+                (int)(s_monitor.last_temp_deci_c / 10),
+                (int)(s_monitor.last_temp_deci_c % 10),
+                (s_monitor.door_stable_state != 0U) ? "OPEN" : "CLOSED",
+                (int)s_monitor.last_accel.x_mg,
+                (int)s_monitor.last_accel.y_mg,
+                (int)s_monitor.last_accel.z_mg);
 
         perf_record(PERF_TELEMETRY, task_started_us);
+
+        if ((int32_t)(HAL_GetTick() -
+            (s_last_telemetry_ms + TELEMETRY_PERIOD_MS)) > 0) {
+            perf_note_deadline_miss(PERF_TELEMETRY);
+        }
     }
 
     if (sample_loop) {
