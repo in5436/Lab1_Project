@@ -3,6 +3,7 @@
 #include "rack_monitor.h"
 #include <stdio.h>
 #include <string.h>
+#include "perf.h"
 
 #define IMU_POLL_PERIOD_MS      20U     
 #define ADC_POLL_PERIOD_MS      20U     
@@ -224,6 +225,13 @@ static void platform_handle_command(const char *cmd)
                    (unsigned long)now, (unsigned int)s_imu.dev_addr);
         }
         s_imu.dev_addr = MPU6050_ADDR_DEFAULT;
+    } else if (strcmp(cmd, "perf") == 0) {
+    uint32_t time_us = perf_now_us();
+
+    printf("[PERF] tick_ms=%lu timer_us=%lu\r\n",
+           (unsigned long)HAL_GetTick(),
+           (unsigned long)time_us);
+
     } else if (strcmp(cmd, "status") == 0) {
         printf("[STATUS] ts=%lu ms mode=%s temp=%d.%dC door=%s ax=%d ay=%d az=%d mg alarms=%lu\r\n",
                (unsigned long)now,
@@ -270,6 +278,8 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
     s_hi2c  = hi2c;
     s_hadc  = hadc;
 
+    perf_init();
+
     rack_monitor_init(&s_monitor);
 
     bus.ctx = s_hi2c;
@@ -308,7 +318,7 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
     printf("[SELF-TEST] DOOR_SW pin=PA1 level=%u state=%s status=OK\r\n",
            (unsigned int)door_state, (door_state != 0U) ? "OPEN" : "CLOSED");
 
-    printf("System Init %s | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack\r\n",
+    printf("System Init %s | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack, perf\r\n",
            ((imu_st == MPU6050_OK) && adc_ok) ? "OK" : "FAIL");
 }
 
