@@ -9,7 +9,7 @@ EXEC = test_runner
 
 vpath %.c ../firmware/App ../firmware/Devices .
 
-all: check-deps $(EXEC) run coverage uart-stress
+all: check-deps $(EXEC) run coverage uart-stress log-analysis
 
 $(EXEC): $(OBJ)
 	$(CC) $(OBJ) -o $@ $(LDFLAGS)
@@ -41,6 +41,9 @@ $(UART_STRESS_TEST): test_uart_stress.c ../firmware/Platform/uart_stress.c
 
 uart-stress: $(UART_STRESS_TEST)
 	./$(UART_STRESS_TEST)
+
+log-analysis:
+	python3 -m unittest -v test_analyze_lab3
 
 clean:
 	rm -f $(OBJ) $(EXEC) $(UART_STRESS_TEST) *.gcno *.gcda *.gcov

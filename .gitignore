@@ -4,3 +4,5 @@ firmware/build/
 *.bin
 *.hex
 *.o
+__pycache__/
+*.py[cod]
