@@ -9,7 +9,7 @@ EXEC = test_runner
 
 vpath %.c ../firmware/App ../firmware/Devices .
 
-all: check-deps $(EXEC) run coverage
+all: check-deps $(EXEC) run coverage uart-stress
 
 $(EXEC): $(OBJ)
 	$(CC) $(OBJ) -o $@ $(LDFLAGS)
@@ -33,5 +33,14 @@ check-deps:
 		echo "OK: Dependency rules passed."; \
 	fi
 
+UART_STRESS_TEST = uart_stress_runner
+
+$(UART_STRESS_TEST): test_uart_stress.c ../firmware/Platform/uart_stress.c
+	$(CC) -std=c11 -Wall -Wextra -Werror \
+	    -I../firmware/Platform $^ -o $@
+
+uart-stress: $(UART_STRESS_TEST)
+	./$(UART_STRESS_TEST)
+
 clean:
-	rm -f $(OBJ) $(EXEC) *.gcno *.gcda *.gcov
+	rm -f $(OBJ) $(EXEC) $(UART_STRESS_TEST) *.gcno *.gcda *.gcov

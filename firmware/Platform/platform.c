@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "perf.h"
+#include "uart_stress.h"
 
 #define IMU_POLL_PERIOD_MS      20U     
 #define ADC_POLL_PERIOD_MS      20U     
@@ -24,6 +25,11 @@ static uint16_t s_last_adc_raw = 0U;
 
 static char s_cmd_buf[32];
 static uint8_t s_cmd_len = 0U;
+static uint32_t s_uart_rx_bytes = 0U;
+static uint32_t s_uart_rx_lines = 0U;
+static uint32_t s_uart_rx_overruns = 0U;
+static uint32_t s_uart_rx_long_lines = 0U;
+static bool s_uart_drop_line = false;
 
 static void platform_delay_us(uint32_t us)
 {
@@ -189,6 +195,44 @@ static uint8_t platform_read_door_pin(void)
     return (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1) == GPIO_PIN_SET) ? 1U : 0U;
 }
 
+static void platform_uart_load(uint16_t requested)
+{
+    uint8_t chunk[UART_STRESS_CHUNK];
+    uint16_t sent = 0U;
+    uint32_t start_us;
+    uint32_t elapsed_us;
+    HAL_StatusTypeDef result = HAL_OK;
+
+    uart_stress_make_chunk(chunk);
+
+    printf("[BURST] start bytes=%u\r\n",
+           (unsigned int)requested);
+
+    start_us = perf_now_us();
+
+    while (sent < requested) {
+        result = HAL_UART_Transmit(
+            s_huart,
+            chunk,
+            UART_STRESS_CHUNK,
+            200U
+        );
+
+        if (result != HAL_OK) {
+            break;
+        }
+
+        sent += UART_STRESS_CHUNK;
+    }
+
+    elapsed_us = perf_now_us() - start_us;
+
+    printf("[BURST] end completed_bytes=%u duration_us=%lu status=%s\r\n",
+           (unsigned int)sent,
+           (unsigned long)elapsed_us,
+           result == HAL_OK ? "OK" : "ERROR");
+}
+
 static void platform_handle_command(const char *cmd)
 {
     uint32_t now = HAL_GetTick();
@@ -239,6 +283,31 @@ static void platform_handle_command(const char *cmd)
     } else if (strcmp(cmd, "stats") == 0) {
         perf_stats_print();
 
+    } else if (strcmp(cmd, "uart stats") == 0) {
+        printf("[UART_RX] bytes=%lu lines=%lu overrun_events=%lu long_lines=%lu\r\n",
+               (unsigned long)s_uart_rx_bytes,
+               (unsigned long)s_uart_rx_lines,
+               (unsigned long)s_uart_rx_overruns,
+               (unsigned long)s_uart_rx_long_lines);
+
+    } else if (strcmp(cmd, "uart reset") == 0) {
+        s_uart_rx_bytes = 0U;
+        s_uart_rx_lines = 0U;
+        s_uart_rx_overruns = 0U;
+        s_uart_rx_long_lines = 0U;
+
+        printf("[UART_RX] reset=OK\r\n");
+
+    } else if (strncmp(cmd, "load", 4U) == 0 &&
+               (cmd[4] == ' ' || cmd[4] == '\0')) {
+        uint16_t requested;
+
+        if (uart_stress_parse(cmd, &requested)) {
+            platform_uart_load(requested);
+        } else {
+            printf("[BURST] error=INVALID_SIZE range=256..4096 step=64\r\n");
+        }
+
     } else if (strcmp(cmd, "status") == 0) {
         printf("[STATUS] ts=%lu ms mode=%s temp=%d.%dC door=%s ax=%d ay=%d az=%d mg alarms=%lu\r\n",
                (unsigned long)now,
@@ -257,30 +326,53 @@ static void platform_poll_uart_rx(void)
 {
     uint8_t ch;
 
-    while ((s_huart != NULL) &&
-           ((s_huart->Instance->ISR & USART_ISR_RXNE_RXFNE) != 0U)) {
+    while (s_huart != NULL) {
+        uint32_t flags = s_huart->Instance->ISR;
+
+        /* Апаратне переповнення приймача */
+        if ((flags & USART_ISR_ORE) != 0U) {
+            s_uart_rx_overruns++;
+            s_huart->Instance->ICR = USART_ICR_ORECF;
+        }
+
+        if ((flags & USART_ISR_RXNE_RXFNE) == 0U) {
+            break;
+        }
 
         ch = (uint8_t)(s_huart->Instance->RDR & 0xFFU);
+        s_uart_rx_bytes++;
 
         if ((ch == '\r') || (ch == '\n')) {
-            if (s_cmd_len > 0U) {
-                uint32_t start_us;
+            if ((s_cmd_len > 0U) || s_uart_drop_line) {
+                s_uart_rx_lines++;
 
-                s_cmd_buf[s_cmd_len] = '\0';
+                if (!s_uart_drop_line) {
+                    uint32_t start_us;
 
-                if ((strcmp(s_cmd_buf, "stats") == 0) ||
-                    (strcmp(s_cmd_buf, "stats reset") == 0)) {
-                    platform_handle_command(s_cmd_buf);
-                } else {
-                    start_us = perf_now_us();
-                    platform_handle_command(s_cmd_buf);
-                    perf_record(PERF_UART_CMD, start_us);
+                    s_cmd_buf[s_cmd_len] = '\0';
+
+                    if ((strcmp(s_cmd_buf, "stats") == 0) ||
+                        (strcmp(s_cmd_buf, "stats reset") == 0)) {
+                        platform_handle_command(s_cmd_buf);
+                    } else {
+                        start_us = perf_now_us();
+
+                        platform_handle_command(s_cmd_buf);
+
+                        perf_record(PERF_UART_CMD, start_us);
+                    }
                 }
 
                 s_cmd_len = 0U;
+                s_uart_drop_line = false;
             }
-        } else if (s_cmd_len < (sizeof(s_cmd_buf) - 1U)) {
-            s_cmd_buf[s_cmd_len++] = (char)ch;
+        } else if (!s_uart_drop_line) {
+            if (s_cmd_len < (sizeof(s_cmd_buf) - 1U)) {
+                s_cmd_buf[s_cmd_len++] = (char)ch;
+            } else {
+                s_uart_drop_line = true;
+                s_uart_rx_long_lines++;
+            }
         }
     }
 }
@@ -339,7 +431,7 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
     printf("[SELF-TEST] DOOR_SW pin=PA1 level=%u state=%s status=OK\r\n",
            (unsigned int)door_state, (door_state != 0U) ? "OPEN" : "CLOSED");
 
-    printf("System Init %s | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack, perf, stats, stats reset\r\n",
+    printf("System Init %s | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset\r\n",
            ((imu_st == MPU6050_OK) && adc_ok) ? "OK" : "FAIL");
 }
 
