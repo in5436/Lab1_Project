@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdio.h>
 #include "platform.h"
+#include "memory_probe.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -79,7 +80,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  memory_probe_init();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/

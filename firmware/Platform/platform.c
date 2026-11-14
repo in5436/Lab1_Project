@@ -5,6 +5,7 @@
 #include <string.h>
 #include "perf.h"
 #include "uart_stress.h"
+#include "memory_probe.h"
 
 #define IMU_POLL_PERIOD_MS      20U     
 #define ADC_POLL_PERIOD_MS      20U     
@@ -308,6 +309,9 @@ static void platform_handle_command(const char *cmd)
             printf("[BURST] error=INVALID_SIZE range=256..4096 step=64\r\n");
         }
 
+    } else if (strcmp(cmd, "mem") == 0) {
+        memory_probe_print();
+
     } else if (strcmp(cmd, "status") == 0) {
         printf("[STATUS] ts=%lu ms mode=%s temp=%d.%dC door=%s ax=%d ay=%d az=%d mg alarms=%lu\r\n",
                (unsigned long)now,
@@ -431,7 +435,7 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
     printf("[SELF-TEST] DOOR_SW pin=PA1 level=%u state=%s status=OK\r\n",
            (unsigned int)door_state, (door_state != 0U) ? "OPEN" : "CLOSED");
 
-    printf("System Init %s | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset\r\n",
+    printf("System Init %s | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset, mem\r\n",
            ((imu_st == MPU6050_OK) && adc_ok) ? "OK" : "FAIL");
 }
 
