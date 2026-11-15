@@ -7,6 +7,10 @@
 #include "uart_stress.h"
 #include "memory_probe.h"
 
+#ifndef LAB3_BUILD_SHA
+#define LAB3_BUILD_SHA "unknown"
+#endif
+
 #define IMU_POLL_PERIOD_MS      20U     
 #define ADC_POLL_PERIOD_MS      20U     
 #define TELEMETRY_PERIOD_MS     1000U   
@@ -101,6 +105,11 @@ static bus_status_t i2c_raw_write(I2C_TypeDef *inst, uint8_t dev_addr, const uin
         return BUS_ERR_NACK;
     }
 
+    if ((inst->ISR & I2C_ISR_STOPF) == 0U) {
+        i2c_clear_flags(inst);
+        return BUS_ERR_TIMEOUT;
+    }
+
     platform_delay_us(120U);
     i2c_clear_flags(inst);
     return BUS_OK;
@@ -170,6 +179,17 @@ static bus_status_t platform_i2c_read_regs(void *ctx, uint8_t dev_addr, uint8_t 
     while (((inst->ISR & I2C_ISR_STOPF) == 0U) && (guard > 0U)) {
         guard--;
     }
+
+    if ((inst->ISR & I2C_ISR_NACKF) != 0U) {
+        i2c_clear_flags(inst);
+        return BUS_ERR_NACK;
+    }
+
+    if ((inst->ISR & I2C_ISR_STOPF) == 0U) {
+        i2c_clear_flags(inst);
+        return BUS_ERR_TIMEOUT;
+    }
+
     i2c_clear_flags(inst);
     return BUS_OK;
 }
@@ -405,6 +425,10 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
 
     printf("\r\n=== Server Rack Health Monitor: Self-Test (Bring-up) ===\r\n");
 
+    printf("[BUILD] git=%s clock_hz=%lu baud=115200\r\n",
+       LAB3_BUILD_SHA,
+       (unsigned long)SystemCoreClock);
+
     imu_st = mpu6050_init(&s_imu, &bus, MPU6050_ADDR_DEFAULT);
     if (imu_st == MPU6050_OK) {
         (void)mpu6050_read_accel_mg(&s_imu, &init_acc, raw);
@@ -444,7 +468,7 @@ void Platform_Step(void)
     static uint32_t s_last_sample_ms = 0U;
 
     uint32_t now = HAL_GetTick();
-    uint32_t loop_started_us = 0U;
+    uint32_t loop_started_us = perf_now_us();
     uint32_t task_started_us;
 
     bool sample_loop = (now != s_last_sample_ms);
@@ -456,7 +480,6 @@ void Platform_Step(void)
 
     if (sample_loop) {
         s_last_sample_ms = now;
-        loop_started_us = perf_now_us();
     }
 
     platform_poll_uart_rx();
@@ -465,15 +488,16 @@ void Platform_Step(void)
     now = HAL_GetTick();
 
     if ((now - s_last_adc_ms) >= ADC_POLL_PERIOD_MS) {
-        uint32_t due =
-            (now - s_last_adc_ms) / ADC_POLL_PERIOD_MS;
+        uint32_t elapsed_ms = now - s_last_adc_ms;
+        uint32_t due = elapsed_ms / ADC_POLL_PERIOD_MS;
+        uint32_t lateness_ms = elapsed_ms - ADC_POLL_PERIOD_MS;
 
         s_last_adc_ms += due * ADC_POLL_PERIOD_MS;
 
         perf_note_schedule(
             PERF_ADC,
             due - 1U,
-            now - s_last_adc_ms
+            lateness_ms
         );
 
         task_started_us = perf_now_us();
@@ -493,15 +517,16 @@ void Platform_Step(void)
     now = HAL_GetTick();
 
     if ((now - s_last_imu_ms) >= IMU_POLL_PERIOD_MS) {
-        uint32_t due =
-            (now - s_last_imu_ms) / IMU_POLL_PERIOD_MS;
+        uint32_t elapsed_ms = now - s_last_imu_ms;
+        uint32_t due = elapsed_ms / IMU_POLL_PERIOD_MS;
+        uint32_t lateness_ms = elapsed_ms - IMU_POLL_PERIOD_MS;
 
         s_last_imu_ms += due * IMU_POLL_PERIOD_MS;
 
         perf_note_schedule(
             PERF_IMU,
             due - 1U,
-            now - s_last_imu_ms
+            lateness_ms
         );
 
         task_started_us = perf_now_us();
@@ -580,15 +605,16 @@ void Platform_Step(void)
     now = HAL_GetTick();
 
     if ((now - s_last_telemetry_ms) >= TELEMETRY_PERIOD_MS) {
-        uint32_t due =
-            (now - s_last_telemetry_ms) / TELEMETRY_PERIOD_MS;
+        uint32_t elapsed_ms = now - s_last_telemetry_ms;
+        uint32_t due = elapsed_ms / TELEMETRY_PERIOD_MS;
+        uint32_t lateness_ms = elapsed_ms - TELEMETRY_PERIOD_MS;
 
         s_last_telemetry_ms += due * TELEMETRY_PERIOD_MS;
 
         perf_note_schedule(
             PERF_TELEMETRY,
             due - 1U,
-            now - s_last_telemetry_ms
+            lateness_ms
         );
 
         task_started_us = perf_now_us();

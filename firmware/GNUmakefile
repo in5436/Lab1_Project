@@ -43,3 +43,6 @@ $(BUILD_DIR)/main.o $(BUILD_DIR)/platform.o \
 $(BUILD_DIR)/perf.o $(BUILD_DIR)/uart_stress.o \
 $(BUILD_DIR)/memory_probe.o $(BUILD_DIR)/mpu6050.o \
 $(BUILD_DIR)/rack_monitor.o: CFLAGS += -Wextra
+
+LAB3_GIT_SHA := $(shell git rev-parse --short=12 HEAD 2>/dev/null || echo unknown)
+CFLAGS += -DLAB3_BUILD_SHA=\"$(LAB3_GIT_SHA)\"
