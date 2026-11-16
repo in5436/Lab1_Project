@@ -1,0 +1,10 @@
+scenario,source,window_ms,name,n,min_us,avg_us,max_us,jitter_max_us,missed,late_max_ms,deadline_miss,overruns
+S1,docs/metrics/lab3/S1.log,70846,ADC,3541,9531,19999,30478,10478,0,10,0,0
+S1,docs/metrics/lab3/S1.log,70846,IMU,3541,10754,19999,29378,9378,0,9,0,0
+S1,docs/metrics/lab3/S1.log,70846,TELEMETRY,70,998562,999979,1001405,1438,0,1,0,0
+S2,docs/metrics/lab3/S2.log,3600941,ADC,180045,9266,20000,122837,102837,5,102,0,0
+S2,docs/metrics/lab3/S2.log,3600941,IMU,180045,10359,20000,122848,102848,5,102,0,0
+S2,docs/metrics/lab3/S2.log,3600941,TELEMETRY,3600,998545,999978,1001414,1455,0,1,0,0
+S3,docs/metrics/lab3/S3.log,180980,ADC,8461,1406,21387,415728,395728,587,395,0,0
+S3,docs/metrics/lab3/S3.log,180980,IMU,8461,1396,21387,415742,395742,587,395,0,0
+S3,docs/metrics/lab3/S3.log,180980,TELEMETRY,180,998557,999979,1001408,1443,0,1,0,0

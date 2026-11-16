@@ -1,0 +1,4 @@
+scenario,source,start_event,end_event,n,min_us,avg_us,max_us,p99_us,unmatched_starts,unmatched_ends,invalid_pairs
+S1,docs/metrics/lab3/S1.log,door_open_observed,door_response,0,,,,,0,0,0
+S2,docs/metrics/lab3/S2.log,door_open_observed,door_response,0,,,,,0,0,0
+S3,docs/metrics/lab3/S3.log,door_open_observed,door_response,1,54383,54383.00,54383,54383,0,0,0

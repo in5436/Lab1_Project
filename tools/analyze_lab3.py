@@ -7,6 +7,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
 from statistics import mean
+import subprocess
 
 FIELD_RE = re.compile(r"\b([a-zA-Z][a-zA-Z0-9_]*)=([^\s]+)")
 TAG_RE = re.compile(r"^\[([A-Z_]+)\]\s*(.*)$")
@@ -95,6 +96,7 @@ def parse_log(scenario, path):
                 run.uart = data
             elif tag == "BUILD":
                 run.build = data
+                run.build["origin"] = "UART"
             elif tag == "ALARM":
                 run.alarm_count += 1
             elif tag == "BURST":
@@ -174,6 +176,7 @@ def make_outputs(runs, out_dir, baud, pairs):
         system = dict(common)
         system.update({
             "git": run.build.get("git", ""),
+            "git_origin": run.build.get("origin", "UNKNOWN"),
             "window_ms": snap.window_ms if snap else "",
             "work_min_pct": snap.work_min_pct if snap else "",
             "stack_reserved": run.stack.get("stack_reserved", ""),
@@ -190,7 +193,11 @@ def make_outputs(runs, out_dir, baud, pairs):
         })
         systems.append(system)
         report.append(f"[{run.scenario}] source={run.source}")
-        report.append(f"  git={system['git'] or 'UNKNOWN'} window_ms={system['window_ms'] or 'N/A'}")
+        report.append(
+            f"  git={system['git'] or 'UNKNOWN'} "
+            f"origin={system['git_origin']} "
+            f"window_ms={system['window_ms'] or 'N/A'}"
+        )
         if snap:
             for name, data in sorted(snap.tasks.items()):
                 row = dict(common, window_ms=snap.window_ms, **data)
@@ -243,7 +250,7 @@ def make_outputs(runs, out_dir, baud, pairs):
 
     write_csv(out / "tasks.csv", ["scenario", "source", "window_ms", "name", "n", "min_us", "avg_us", "max_us"], tasks)
     write_csv(out / "periods.csv", ["scenario", "source", "window_ms", "name", "n", "min_us", "avg_us", "max_us", "jitter_max_us", "missed", "late_max_ms", "deadline_miss", "overruns"], periods)
-    write_csv(out / "system.csv", ["scenario", "source", "git", "window_ms", "work_min_pct", "stack_reserved", "stack_depth_est", "stack_spare", "stack_state", "heap_brk_used", "heap_room", "uart_rx_bytes", "uart_rx_lines", "uart_rx_overrun_events", "uart_rx_long_lines", "alarm_messages"], systems)
+    write_csv(out / "system.csv", ["scenario", "source", "git", "git_origin", "window_ms", "work_min_pct", "stack_reserved", "stack_depth_est", "stack_spare", "stack_state", "heap_brk_used", "heap_room", "uart_rx_bytes", "uart_rx_lines", "uart_rx_overrun_events", "uart_rx_long_lines", "alarm_messages"], systems)
     write_csv(out / "bursts.csv", ["scenario", "source", "requested_bytes", "completed_bytes", "duration_us", "status", "theory_us", "overhead_pct"], bursts)
     write_csv(out / "latencies.csv", ["scenario", "source", "start_event", "end_event", "n", "min_us", "avg_us", "max_us", "p99_us", "unmatched_starts", "unmatched_ends", "invalid_pairs"], latencies)
     write_csv(out / "latency_samples.csv", ["scenario", "source", "start_event", "end_event", "sample", "latency_us"], samples)
@@ -292,31 +299,148 @@ def parse_pair(arg):
         raise argparse.ArgumentTypeError("--pair needs two different event names")
     return a, b
 
+def elf_git_sha(elf_path):
+    if not elf_path.is_file():
+        raise ValueError(f"ELF file not found: {elf_path}")
+
+    result = subprocess.run(
+        ["strings", str(elf_path)],
+        capture_output=True,
+        text=True,
+        check=True
+    )
+
+    candidates = set(
+        re.findall(r"(?m)^([0-9a-f]{12})$", result.stdout)
+    )
+
+    if len(candidates) != 1:
+        raise ValueError(
+            f"Cannot identify one unique build SHA in {elf_path}: "
+            f"{sorted(candidates)}"
+        )
+
+    return candidates.pop()
+
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--run", type=parse_run, action="append", required=True, metavar="S1=PATH")
-    parser.add_argument("--out", type=Path, default=Path("docs/metrics/lab3/analysis"))
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument(
+        "--run",
+        type=parse_run,
+        action="append",
+        required=True,
+        metavar="S1=PATH"
+    )
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=Path("docs/metrics/lab3/analysis")
+    )
     parser.add_argument("--baud", type=int, default=115200)
-    parser.add_argument("--pair", type=parse_pair, action="append", default=[], metavar="START:END")
+    parser.add_argument(
+        "--pair",
+        type=parse_pair,
+        action="append",
+        default=[],
+        metavar="START:END"
+    )
+
+    parser.add_argument(
+        "--elf",
+        type=Path,
+        help="Check firmware revision against the compiled ELF"
+    )
+    parser.add_argument(
+        "--acknowledge-legacy-build",
+        action="store_true",
+        help=(
+            "Operator attests that logs without a BUILD banner "
+            "were recorded using the supplied ELF"
+        )
+    )
+
     args = parser.parse_args(argv)
+
     if args.baud <= 0:
         parser.error("--baud must be positive")
+
+    if args.acknowledge_legacy_build and args.elf is None:
+        parser.error(
+            "--acknowledge-legacy-build requires --elf"
+        )
+
     names = [name for name, path in args.run]
+
     if len(set(names)) != len(names):
         parser.error("scenario names must be unique")
+
     runs = []
+
     for name, path in args.run:
         try:
             runs.append(parse_log(name, path))
         except OSError as exc:
             parser.error(str(exc))
+
+    if args.elf is not None:
+        try:
+            expected_sha = elf_git_sha(args.elf)
+        except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+            parser.error(str(exc))
+
+        print(f"ELF build: {expected_sha}")
+
+        for current in runs:
+            logged_sha = current.build.get("git")
+
+            # Never override an actual, different firmware revision.
+            if logged_sha and logged_sha != expected_sha:
+                parser.error(
+                    f"{current.scenario}: firmware mismatch! "
+                    f"Log={logged_sha}, ELF={expected_sha}"
+                )
+
+            # Old logs have no captured startup banner.
+            # Attribution requires explicit operator acknowledgement.
+            if not logged_sha and args.acknowledge_legacy_build:
+                current.build["git"] = expected_sha
+                current.build["origin"] = "ELF_OPERATOR_ATTESTED"
+
+                current.warnings = [
+                    warning for warning in current.warnings
+                    if not warning.startswith("no [BUILD]")
+                ]
+
+                current.warnings.append(
+                    "Firmware revision attributed by operator "
+                    "to the supplied ELF; not verified from MCU UART"
+                )
+
     out = make_outputs(runs, args.out, args.baud, args.pair)
+
     print(f"Saved analysis to: {out}")
-    for r in runs:
-        print(f"  {r.scenario}: {len(r.snapshots)} stats block(s), {len(r.bursts)} burst(s), {len(r.events)} EVT record(s)")
-        for warning in r.warnings:
-            print(f"  WARNING {r.scenario}: {warning}", file=sys.stderr)
+
+    for current in runs:
+        print(
+            f"  {current.scenario}: "
+            f"git={current.build.get('git', 'UNKNOWN')} "
+            f"origin={current.build.get('origin', 'UNKNOWN')} "
+            f"stats={len(current.snapshots)} "
+            f"bursts={len(current.bursts)} "
+            f"events={len(current.events)}"
+        )
+
+        for warning in current.warnings:
+            print(
+                f"  WARNING {current.scenario}: {warning}",
+                file=sys.stderr
+            )
+
     return 0
 
 

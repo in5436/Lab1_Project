@@ -1,0 +1,10 @@
+task,metric,s1,s3,delta_s3_minus_s1
+ADC,jitter_max_us,10478,395728,385250
+ADC,max_us,30478,415728,385250
+ADC,missed_per_min,0.000,194.607,194.607
+IMU,jitter_max_us,9378,395742,386364
+IMU,max_us,29378,415742,386364
+IMU,missed_per_min,0.000,194.607,194.607
+TELEMETRY,jitter_max_us,1438,1443,5
+TELEMETRY,max_us,1001405,1001408,3
+TELEMETRY,missed_per_min,0.000,0.000,0.000

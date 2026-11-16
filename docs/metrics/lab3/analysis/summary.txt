@@ -1,0 +1,29 @@
+Server Rack Health Monitor | analysis of MCU UART logs
+
+[S1] source=docs/metrics/lab3/S1.log
+  git=94dc520d6d62 origin=UART window_ms=70846
+  ADC: avg_period_us=19999 jitter_max_us=10478 missed=0
+  IMU: avg_period_us=19999 jitter_max_us=9378 missed=0
+  work_min_pct=7.0 (lower bound, not total CPU load)
+  stack_depth_est=672 heap_brk_used=1468
+  EVT door_open_observed->door_response: n=0 max_us=N/A
+
+[S2] source=docs/metrics/lab3/S2.log
+  git=94dc520d6d62 origin=ELF_OPERATOR_ATTESTED window_ms=3600941
+  ADC: avg_period_us=20000 jitter_max_us=102837 missed=5
+  IMU: avg_period_us=20000 jitter_max_us=102848 missed=5
+  work_min_pct=7.0 (lower bound, not total CPU load)
+  stack_depth_est=640 heap_brk_used=1468
+  EVT door_open_observed->door_response: n=0 max_us=N/A
+  WARNING: Firmware revision attributed by operator to the supplied ELF; not verified from MCU UART
+
+[S3] source=docs/metrics/lab3/S3.log
+  git=94dc520d6d62 origin=ELF_OPERATOR_ATTESTED window_ms=180980
+  ADC: avg_period_us=21387 jitter_max_us=395728 missed=587
+  IMU: avg_period_us=21387 jitter_max_us=395742 missed=587
+  work_min_pct=13.5 (lower bound, not total CPU load)
+  stack_depth_est=696 heap_brk_used=1468
+  EVT door_open_observed->door_response: n=1 max_us=54383
+  WARNING: Firmware revision attributed by operator to the supplied ELF; not verified from MCU UART
+  WARNING: EVT door_open_observed->door_response: only 1 samples; need >=30
+
