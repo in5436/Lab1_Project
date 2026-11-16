@@ -27,6 +27,8 @@ static uint32_t s_last_imu_ms = 0U;
 static uint32_t s_last_adc_ms = 0U;
 static uint32_t s_last_telemetry_ms = 0U;
 static uint16_t s_last_adc_raw = 0U;
+static uint32_t s_door_open_seen_us = 0U;
+static bool s_door_open_pending = false;
 
 static char s_cmd_buf[32];
 static uint8_t s_cmd_len = 0U;
@@ -531,11 +533,15 @@ void Platform_Step(void)
 
         task_started_us = perf_now_us();
 
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
+
         if (mpu6050_read_accel_mg(&s_imu, &acc, NULL) == MPU6050_OK) {
             imu_ok = true;
         } else {
             imu_ok = false;
         }
+
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
 
         perf_record(PERF_IMU, task_started_us);
         need_update = true;
@@ -547,7 +553,19 @@ void Platform_Step(void)
     }
 
     if (need_update) {
+        uint8_t door_pin;
+
         task_started_us = perf_now_us();
+
+        door_pin = platform_read_door_pin();
+
+        if (door_pin != s_monitor.door_raw_prev) {
+            s_door_open_pending = (door_pin != 0U);
+
+            if (s_door_open_pending) {
+                s_door_open_seen_us = perf_now_us();
+            }
+        }
 
         alarms = rack_monitor_update(
             &s_monitor,
@@ -555,7 +573,7 @@ void Platform_Step(void)
             &acc,
             imu_ok,
             s_last_adc_raw,
-            platform_read_door_pin()
+            door_pin
         );
 
         if ((alarms & RACK_ALARM_SHOCK) != 0U) {
@@ -574,8 +592,25 @@ void Platform_Step(void)
         }
 
         if ((alarms & RACK_ALARM_DOOR_OPENED) != 0U) {
+            uint32_t response_us;
+
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_SET);
+            response_us = perf_now_us();
+
             printf("[ALARM] DOOR OPENED | ts=%lu ms pin=PA1\r\n",
-                   (unsigned long)now);
+                (unsigned long)now);
+
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_RESET);
+
+            if (s_door_open_pending) {
+                printf("EVT t_us=%lu name=door_open_observed\r\n",
+                    (unsigned long)s_door_open_seen_us);
+
+                printf("EVT t_us=%lu name=door_response\r\n",
+                    (unsigned long)response_us);
+
+                s_door_open_pending = false;
+            }
         }
 
         if ((alarms & RACK_ALARM_SENSOR_FAULT) != 0U) {
@@ -637,7 +672,5 @@ void Platform_Step(void)
         }
     }
 
-    if (sample_loop) {
-        perf_record(PERF_LOOP, loop_started_us);
-    }
+    perf_record(PERF_LOOP, loop_started_us);
 }
