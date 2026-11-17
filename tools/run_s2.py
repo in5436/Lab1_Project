@@ -22,7 +22,8 @@ output.parent.mkdir(parents=True, exist_ok=True)
 actions_path = output.with_name(output.stem + "-actions.csv")
 
 schedule = [
-    (0, "stats reset"),
+    (0, "build"),
+    (1000, "stats reset"),
     (3000, "mem"),
     (300000, "status"),
     (600000, "probe"),

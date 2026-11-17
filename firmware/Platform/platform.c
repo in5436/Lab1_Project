@@ -37,6 +37,21 @@ static uint32_t s_uart_rx_lines = 0U;
 static uint32_t s_uart_rx_overruns = 0U;
 static uint32_t s_uart_rx_long_lines = 0U;
 static bool s_uart_drop_line = false;
+static bool s_first_imu_logged = false;
+static bool s_first_adc_logged = false;
+
+static void platform_log_first_sample(const char *sensor, bool *logged)
+{
+    if (*logged) {
+        return;
+    }
+
+    uint32_t uptime_ms = HAL_GetTick();
+    *logged = true;
+
+    printf("[FIRST_SAMPLE] sensor=%s uptime_ms=%lu\r\n",
+           sensor, (unsigned long)uptime_ms);
+}
 
 static void platform_delay_us(uint32_t us)
 {
@@ -292,6 +307,11 @@ static void platform_handle_command(const char *cmd)
                    (unsigned long)now, (unsigned int)s_imu.dev_addr);
         }
         s_imu.dev_addr = MPU6050_ADDR_DEFAULT;
+    } else if (strcmp(cmd, "build") == 0) {
+        printf("[BUILD] git=%s clock_hz=%lu baud=115200\r\n",
+               LAB3_BUILD_SHA,
+               (unsigned long)SystemCoreClock);
+
     } else if (strcmp(cmd, "perf") == 0) {
         uint32_t time_us = perf_now_us();
 
@@ -412,6 +432,7 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
     int16_t temp_dc;
     uint8_t door_state;
     bool adc_ok;
+    bool imu_sample_ok;
 
     s_huart = huart;
     s_hi2c  = hi2c;
@@ -432,9 +453,14 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
        (unsigned long)SystemCoreClock);
 
     imu_st = mpu6050_init(&s_imu, &bus, MPU6050_ADDR_DEFAULT);
-    if (imu_st == MPU6050_OK) {
-        (void)mpu6050_read_accel_mg(&s_imu, &init_acc, raw);
+
+    imu_sample_ok = (imu_st == MPU6050_OK) &&
+        (mpu6050_read_accel_mg(&s_imu, &init_acc, raw) == MPU6050_OK);
+
+    if (imu_sample_ok) {
         s_monitor.last_accel = init_acc;
+
+        platform_log_first_sample("MPU6050", &s_first_imu_logged);
         printf("[SELF-TEST] MPU6050 addr=0x%02X who_am_i=0x%02X ax=%d ay=%d az=%d mg status=OK\r\n",
                (unsigned int)s_imu.dev_addr,
                (unsigned int)s_imu.last_who_am_i,
@@ -447,6 +473,8 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
 
      adc_ok = platform_read_adc_marked(&s_last_adc_raw);
     if (adc_ok) {
+        platform_log_first_sample("LM35_ADC", &s_first_adc_logged);
+
         temp_dc = rack_monitor_adc_to_deci_c(s_last_adc_raw);
         s_monitor.last_temp_deci_c = temp_dc;
         printf("[SELF-TEST] LM35_ADC ch=IN0 raw=%u temp=%d.%dC status=OK\r\n",
@@ -461,8 +489,8 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
     printf("[SELF-TEST] DOOR_SW pin=PA1 level=%u state=%s status=OK\r\n",
            (unsigned int)door_state, (door_state != 0U) ? "OPEN" : "CLOSED");
 
-    printf("System Init %s | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset, mem\r\n",
-           ((imu_st == MPU6050_OK) && adc_ok) ? "OK" : "FAIL");
+    printf("System Init %s | Mode=ACTIVE | Commands: build, status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset, mem\r\n",
+           ((imu_sample_ok && adc_ok) ? "OK" : "FAIL"));
 }
 
 void Platform_Step(void)
@@ -475,6 +503,7 @@ void Platform_Step(void)
 
     bool sample_loop = (now != s_last_sample_ms);
     bool need_update = false;
+    bool adc_sample_ok = false;
     bool imu_ok = s_monitor.imu_online;
 
     mpu6050_accel_mg_t acc = s_monitor.last_accel;
@@ -504,7 +533,9 @@ void Platform_Step(void)
 
         task_started_us = perf_now_us();
 
-        if (platform_read_adc_marked(&s_last_adc_raw)) {
+        adc_sample_ok = platform_read_adc_marked(&s_last_adc_raw);
+
+        if (adc_sample_ok) {
             need_update = true;
         }
 
@@ -513,6 +544,10 @@ void Platform_Step(void)
         if ((int32_t)(HAL_GetTick() -
             (s_last_adc_ms + ADC_POLL_PERIOD_MS)) > 0) {
             perf_note_deadline_miss(PERF_ADC);
+        }
+
+        if (adc_sample_ok) {
+            platform_log_first_sample("LM35_ADC", &s_first_adc_logged);
         }
     }
 
@@ -549,6 +584,10 @@ void Platform_Step(void)
         if ((int32_t)(HAL_GetTick() -
             (s_last_imu_ms + IMU_POLL_PERIOD_MS)) > 0) {
             perf_note_deadline_miss(PERF_IMU);
+        }
+
+        if (imu_ok) {
+            platform_log_first_sample("MPU6050", &s_first_imu_logged);
         }
     }
 

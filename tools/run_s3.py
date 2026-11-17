@@ -23,7 +23,8 @@ actions_path = output.with_name(output.stem + "-actions.csv")
 timestamp_re = re.compile(r"\[TELEMETRY\] ts=(\d+) ms")
 
 schedule = [
-    (0, "stats reset"),
+    (0, "build"),
+    (1000, "stats reset"),
     (2000, "uart reset"),
 ]
 
