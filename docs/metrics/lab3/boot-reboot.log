@@ -1,0 +1,19 @@
+BOOT 1
+=== Server Rack Health Monitor: Self-Test (Bring-up) ===
+[BUILD] git=c1d1d3a82c1e clock_hz=48000000 baud=115200
+[FIRST_SAMPLE] sensor=MPU6050 uptime_ms=17
+[SELF-TEST] MPU6050 addr=0x68 who_am_i=0x68 ax=0 ay=0 az=1000 mg status=OK
+[FIRST_SAMPLE] sensor=LM35_ADC uptime_ms=30
+[SELF-TEST] LM35_ADC ch=IN0 raw=312 temp=25.1C status=OK
+[SELF-TEST] DOOR_SW pin=PA1 level=0 state=CLOSED status=OK
+System Init OK | Mode=ACTIVE | Commands: build, status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset, mem
+
+BOOT 2
+=== Server Rack Health Monitor: Self-Test (Bring-up) ===
+[BUILD] git=c1d1d3a82c1e clock_hz=48000000 baud=115200
+[FIRST_SAMPLE] sensor=MPU6050 uptime_ms=17
+[SELF-TEST] MPU6050 addr=0x68 who_am_i=0x68 ax=0 ay=0 az=1000 mg status=OK
+[FIRST_SAMPLE] sensor=LM35_ADC uptime_ms=30
+[SELF-TEST] LM35_ADC ch=IN0 raw=312 temp=25.1C status=OK
+[SELF-TEST] DOOR_SW pin=PA1 level=0 state=CLOSED status=OK
+System Init OK | Mode=ACTIVE | Commands: build, status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset, mem

@@ -1,40 +1,40 @@
-Git commit: 6d6bf19
+Git commit: c1d1d3a
 Tracked worktree: MODIFIED
 === LINKER MEMORY USAGE ===
 Memory region         Used Size  Region Size  %age Used
-             RAM:        2704 B        12 KB     22.01%
-           FLASH:       24608 B        32 KB     75.10%
+             RAM:        2712 B        12 KB     22.07%
+           FLASH:       25184 B        32 KB     76.86%
 arm-none-eabi-size build/firmware.elf
 === ELF SHA256 ===
-310020b959c882f4773b92989454d5f5704ee3d7f9e06c161e6ea08944678a35  build/firmware.elf
+b10b7a785f569913731300bd374c4cd5686fc8f9fa983e3394503a92fe35cb65  build/firmware.elf
 === SIZE ===
    text	   data	    bss	    dec	    hex	filename
-  24496	    112	   2592	  27200	   6a40	build/firmware.elf
+  25072	    112	   2600	  27784	   6c88	build/firmware.elf
 === SECTIONS ===
 build/firmware.elf  :
 section               size        addr
 .isr_vector            192   134217728
-.text                21624   134217920
-.rodata               2664   134239544
-.ARM.extab               0   134242208
-.ARM                     8   134242208
-.preinit_array           0   134242216
-.init_array              4   134242216
-.fini_array              4   134242220
+.text                21984   134217920
+.rodata               2880   134239904
+.ARM.extab               0   134242784
+.ARM                     8   134242784
+.preinit_array           0   134242792
+.init_array              4   134242792
+.fini_array              4   134242796
 .data                  112   536870912
-.bss                  1052   536871024
-._user_heap_stack     1540   536872076
+.bss                  1060   536871024
+._user_heap_stack     1540   536872084
 .ARM.attributes         40           0
 .comment                51           0
-.debug_info         176471           0
-.debug_abbrev        27636           0
-.debug_loc           91837           0
-.debug_aranges        4584           0
-.debug_ranges         4408           0
-.debug_line          91194           0
-.debug_str           24770           0
-.debug_frame         10984           0
-Total               459175
+.debug_info         177395           0
+.debug_abbrev        27639           0
+.debug_loc           92504           0
+.debug_aranges        4592           0
+.debug_ranges         4416           0
+.debug_line          91525           0
+.debug_str           24942           0
+.debug_frame         11012           0
+Total               461900
 
 
 === LARGEST OBJECT FILES ===
@@ -50,41 +50,41 @@ Total               459175
    1820	      0	      0	   1820	    71c	build/stm32c0xx_hal_rcc.o
    1454	      0	    512	   1966	    7ae	build/perf.o
    4616	      0	      0	   4616	   1208	build/stm32c0xx_hal_adc.o
-   4655	      0	    144	   4799	   12bf	build/platform.o
+   5227	      0	    151	   5378	   1502	build/platform.o
    9246	      0	      0	   9246	   241e	build/stm32c0xx_hal_uart.o
   14650	      0	      0	  14650	   393a	build/stm32c0xx_hal_i2c.o
 === LARGEST LINKED SYMBOLS ===
-134230110 00000312 T rack_monitor_update
+134230470 00000312 T rack_monitor_update
 134222340 00000314 T _printf_common
-134228152 00000340 T Platform_Init
-134238152 00000356 T perf_record
-134238604 00000384 T perf_stats_print
-134232588 00000388 T HAL_RCC_ClockConfig
+134238512 00000356 T perf_record
+134238964 00000384 T perf_stats_print
+134232948 00000388 T HAL_RCC_ClockConfig
 134225792 00000406 T __udivmoddi4
-134233368 00000444 T HAL_GPIO_Init
-134234332 00000456 T UART_SetConfig
+134228280 00000416 T Platform_Init
+134233728 00000444 T HAL_GPIO_Init
+134234692 00000456 T UART_SetConfig
 134225164 00000460 T __divsi3
-536871560 00000504 b s_stats
-134235908 00000576 T HAL_ADC_Init
-134236676 00000640 T HAL_ADC_ConfigChannel
+536871568 00000504 b s_stats
+134236268 00000576 T HAL_ADC_Init
+134237036 00000640 T HAL_ADC_ConfigChannel
 134222656 00000648 T _printf_i
-134231796 00000700 T HAL_RCC_OscConfig
+134232156 00000700 T HAL_RCC_OscConfig
 134221616 00000700 T _vfiprintf_r
 134221616 00000700 T _vfprintf_r
 134223620 00000756 T __sfvwrite_r
-134228492 00000816 T Platform_Step
-134227076 00000836 t platform_handle_command
+134227160 00000880 t platform_handle_command
+134228696 00000972 T Platform_Step
 === LARGEST DATA/BSS SYMBOLS ===
 536871016 00000004 D uwTickPrio
-536871112 00000016 b s_imu
+536871120 00000016 b s_imu
 536871028 00000024 b object.0
 536871064 00000032 b s_cmd_buf
-536871148 00000048 b s_monitor
-536871316 00000084 B hi2c1
+536871156 00000048 b s_monitor
+536871324 00000084 B hi2c1
 536870916 00000096 d impure_data
-536871216 00000100 B hadc1
-536871400 00000148 B huart2
-536871560 00000504 b s_stats
+536871224 00000100 B hadc1
+536871408 00000148 B huart2
+536871568 00000504 b s_stats
 === LARGEST STATIC STACK FRAMES ===
 Drivers/STM32C0xx_HAL_Driver/Src/stm32c0xx_hal_i2c.c:3543:19:HAL_I2C_Master_Seq_Transmit_DMA	40	static
 Drivers/STM32C0xx_HAL_Driver/Src/stm32c0xx_hal_i2c.c:3829:19:HAL_I2C_Master_Seq_Receive_DMA	40	static
@@ -102,9 +102,9 @@ Core/Src/main.c:127:6:SystemClock_Config	56	static
 Core/Src/stm32c0xx_hal_msp.c:158:6:HAL_I2C_MspInit	64	static
 Core/Src/stm32c0xx_hal_msp.c:85:6:HAL_ADC_MspInit	64	static
 Platform/perf.c:195:6:perf_stats_print	64	static
-Platform/platform.c:384:6:Platform_Init	64	static
-Platform/platform.c:442:6:Platform_Step	80	static
-Platform/platform.c:199:13:platform_uart_load	88	static
-Platform/platform.c:237:13:platform_handle_command	96	static
+Platform/platform.c:426:6:Platform_Init	64	static
+Platform/platform.c:496:6:Platform_Step	80	static
+Platform/platform.c:236:13:platform_uart_load	88	static
+Platform/platform.c:274:13:platform_handle_command	96	static
 === LINK MAP ===
 firmware/build/firmware.map

@@ -1,0 +1,30 @@
+=== Server Rack Health Monitor: Self-Test (Bring-up) ===
+[BUILD] git=c1d1d3a82c1e clock_hz=48000000 baud=115200
+[SELF-TEST] MPU6050 addr=0x68 who_am_i=0x00 status=FAIL
+[FIRST_SAMPLE] sensor=LM35_ADC uptime_ms=19
+[SELF-TEST] LM35_ADC ch=IN0 raw=312 temp=25.1C status=OK
+[SELF-TEST] DOOR_SW pin=PA1 level=0 state=CLOSED status=OK
+System Init FAIL | Mode=ACTIVE | Commands: build, status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset, mem
+[FAULT] MPU6050 I2C ERROR | ts=56 ms
+[TELEMETRY] ts=1000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=2000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=3000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=4000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=5000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=6000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+
+RESTORED BOOT
+=== Server Rack Health Monitor: Self-Test (Bring-up) ===
+[BUILD] git=c1d1d3a82c1e clock_hz=48000000 baud=115200
+[FIRST_SAMPLE] sensor=MPU6050 uptime_ms=17
+[SELF-TEST] MPU6050 addr=0x68 who_am_i=0x68 ax=0 ay=0 az=1000 mg status=OK
+[FIRST_SAMPLE] sensor=LM35_ADC uptime_ms=30
+[SELF-TEST] LM35_ADC ch=IN0 raw=312 temp=25.1C status=OK
+[SELF-TEST] DOOR_SW pin=PA1 level=0 state=CLOSED status=OK
+System Init OK | Mode=ACTIVE | Commands: build, status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset, mem
+[TELEMETRY] ts=1000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=2001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=3001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=4000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=5001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=6000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg

@@ -1,0 +1,56 @@
+=== Server Rack Health Monitor: Self-Test (Bring-up) ===
+[BUILD] git=c1d1d3a82c1e clock_hz=48000000 baud=115200
+[FIRST_SAMPLE] sensor=MPU6050 uptime_ms=17
+[SELF-TEST] MPU6050 addr=0x68 who_am_i=0x68 ax=0 ay=0 az=1000 mg status=OK
+[FIRST_SAMPLE] sensor=LM35_ADC uptime_ms=30
+[SELF-TEST] LM35_ADC ch=IN0 raw=312 temp=25.1C status=OK
+[SELF-TEST] DOOR_SW pin=PA1 level=0 state=CLOSED status=OK
+System Init OK | Mode=ACTIVE | Commands: build, status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset, mem
+[TELEMETRY] ts=1000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=2001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=3001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=4001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=5000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[STATS] reset=OK
+[TELEMETRY] ts=6000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=7001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=8000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[FAULT] MPU6050 I2C ERROR | ts=8009 ms
+[TELEMETRY] ts=9068 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=10132 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=11020 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=12085 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=13149 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[PROBE] addr=0x68 result=ERROR
+[TELEMETRY] ts=14040 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=15104 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=16000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=17001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=18000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=19001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=20001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=21000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[PROBE] addr=0x68 result=ERROR
+[ALARM] SHOCK DETECTED | ts=21560 ms ax=1625 ay=0 az=0 mg
+[TELEMETRY] ts=22001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=23001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=24001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=25001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=26001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=27001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[STATS] window_ms=21548
+[LOAD] mode=BUSY_LOOP work_min_pct=41.5
+[TASK] name=UART_CMD n=2 min_us=4024 avg_us=91457 max_us=178890
+[TASK] name=ADC n=722 min_us=72 avg_us=72 max_us=75
+[PERIOD] name=ADC n=721 min_us=9579 avg_us=29846 max_us=363938 jitter_max_us=343938 missed=355 late_max_ms=357 deadline_miss=0 overruns=0
+[TASK] name=IMU n=722 min_us=1072 avg_us=11706 max_us=175623
+[PERIOD] name=IMU n=721 min_us=10805 avg_us=29846 max_us=363947 jitter_max_us=343947 missed=355 late_max_ms=357 deadline_miss=44 overruns=44
+[TASK] name=LOGIC n=757 min_us=48 avg_us=84 max_us=6546
+[TASK] name=LED_SAMPLE n=13249 min_us=14 avg_us=23 max_us=33
+[TASK] name=TELEMETRY n=22 min_us=9017 avg_us=9111 max_us=9143
+[PERIOD] name=TELEMETRY n=21 min_us=888342 avg_us=1000043 max_us=1068411 jitter_max_us=111658 missed=0 late_max_ms=149 deadline_miss=0 overruns=0
+[TASK] name=LOOP_SAMPLE n=196977 min_us=29 avg_us=85 max_us=354758
+[TELEMETRY] ts=28001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=29001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=30001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=31001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg

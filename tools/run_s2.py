@@ -66,6 +66,9 @@ with serial.serial_for_url(
     next_action = 0
     next_progress = 0
     final_uart_received = False
+    final_stats_started = False
+    final_stats_received = False
+    next_retry_ms = duration_ms + 15000
 
     while True:
         raw = port.readline()
@@ -78,6 +81,11 @@ with serial.serial_for_url(
 
             if "[UART_RX] bytes=" in line and next_action == len(schedule):
                 final_uart_received = True
+            if "[STATS] window_ms=" in line:
+                final_stats_started = True
+
+            if final_stats_started and "[TASK] name=LOOP_SAMPLE" in line:
+                final_stats_received = True
 
             match = timestamp_re.search(line)
 
@@ -109,10 +117,24 @@ with serial.serial_for_url(
                       f"{args.minutes} simulated minutes")
                 next_progress += 60_000
 
-            if (elapsed_ms >= duration_ms + 15000 and
-                    final_uart_received):
-                print("S2 finished successfully.")
-                break
+            if elapsed_ms >= duration_ms + 15000:
+                if final_uart_received and final_stats_received:
+                    print("S2 finished successfully.")
+                    break
+
+                if elapsed_ms >= next_retry_ms:
+                    if not final_stats_received:
+                        port.write(b"stats\n")
+                        print("Retry: stats")
+
+                    if not final_uart_received:
+                        port.write(b"uart stats\n")
+                        print("Retry: uart stats")
+
+                    next_retry_ms = elapsed_ms + 10000
+
+                if elapsed_ms >= duration_ms + 120000:
+                    raise RuntimeError("S2: missing final statistics")
 
         elif time.monotonic() - last_activity > 90:
             raise TimeoutError(

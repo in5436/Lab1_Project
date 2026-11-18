@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "author": "Лазінько Роман ІО-36",
+  "editor": "wokwi",
+  "parts": [
+      {
+    "type": "wokwi-pushbutton",
+    "id": "faultSda",
+    "top": -235,
+    "left": 70,
+    "attrs": {
+      "label": "SDA FAULT",
+      "color": "blue",
+      "bounce": "0",
+      "key": "F"
+      }
+    },
+    {
+      "type": "board-st-nucleo-c031c6",
+      "id": "nucleo",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-mpu6050",
+      "id": "imu1",
+      "top": -45,
+      "left": 280,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "temp1",
+      "top": 95,
+      "left": -170,
+      "attrs": { "value": "78" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "door1",
+      "top": 215,
+      "left": -165,
+      "attrs": { "color": "red", "label": "Door Switch" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_scl",
+      "top": -95,
+      "left": 180,
+      "attrs": { "value": "4700" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_sda",
+      "top": -65,
+      "left": 180,
+      "attrs": { "value": "4700" }
+    },
+    {
+      "type": "wokwi-logic-analyzer",
+      "id": "logic1",
+      "top": -185,
+      "left": -210,
+      "attrs": {
+        "bufferSize": "10000000"
+      }
+    }
+  ],
+  "connections": [
+    [ "$serialMonitor:TX", "nucleo:PA3", "", [] ],
+    [ "$serialMonitor:RX", "nucleo:PA2", "", [] ],
+
+    [ "imu1:VCC", "nucleo:3V3.1", "red", [] ],
+    [ "imu1:GND", "nucleo:GND.1", "black", [] ],
+    [ "imu1:AD0", "nucleo:GND.1", "black", [] ],
+    [ "imu1:SCL", "nucleo:PA9", "green", [] ],
+    [ "imu1:SDA", "nucleo:PA10", "blue", [] ],
+
+    [ "r_scl:1", "nucleo:3V3.1", "red", [] ],
+    [ "r_scl:2", "nucleo:PA9", "green", [] ],
+    [ "r_sda:1", "nucleo:3V3.1", "red", [] ],
+    [ "r_sda:2", "nucleo:PA10", "blue", [] ],
+
+    [ "temp1:VCC", "nucleo:3V3.1", "red", [] ],
+    [ "temp1:GND", "nucleo:GND.1", "black", [] ],
+    [ "temp1:SIG", "nucleo:PA0", "orange", [] ],
+
+    [ "door1:1.l", "nucleo:3V3.1", "red", [] ],
+    [ "door1:2.l", "nucleo:PA1", "yellow", [] ],
+
+    [ "logic1:GND", "nucleo:GND.1", "black", [] ],
+    [ "logic1:D0", "nucleo:PA9", "green", [] ],
+    [ "logic1:D1", "nucleo:PA10", "blue", [] ],
+    [ "logic1:D2", "nucleo:PA2", "purple", [] ],
+    [ "logic1:D3", "nucleo:PA1", "yellow", [] ],
+    [ "logic1:D4", "nucleo:PA4", "cyan", [] ],
+    [ "logic1:D5", "nucleo:PA3", "gray", [] ],
+    [ "logic1:D6", "nucleo:PA6", "orange", [] ],
+    [ "logic1:D7", "nucleo:PA7", "magenta", [] ],
+
+    ["faultSda:1.l", "nucleo:PA10", "blue", []],
+    ["faultSda:2.l", "nucleo:GND.1", "black", []]
+  ],
+  "dependencies": {}
+}

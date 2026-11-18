@@ -1,120 +1,111 @@
 === Server Rack Health Monitor: Self-Test (Bring-up) ===
-[BUILD] git=94dc520d6d62 clock_hz=48000000 baud=115200
+[BUILD] git=c1d1d3a82c1e clock_hz=48000000 baud=115200
+[FIRST_SAMPLE] sensor=MPU6050 uptime_ms=17
 [SELF-TEST] MPU6050 addr=0x68 who_am_i=0x68 ax=0 ay=0 az=1000 mg status=OK
+[FIRST_SAMPLE] sensor=LM35_ADC uptime_ms=30
 [SELF-TEST] LM35_ADC ch=IN0 raw=312 temp=25.1C status=OK
 [SELF-TEST] DOOR_SW pin=PA1 level=0 state=CLOSED status=OK
-System Init OK | Mode=ACTIVE | Commands: status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset, mem
+System Init OK | Mode=ACTIVE | Commands: build, status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset, mem
 [TELEMETRY] ts=1000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=2000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=2001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=3001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=4001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=5001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=4000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=5000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[BUILD] git=c1d1d3a82c1e clock_hz=48000000 baud=115200
 [TELEMETRY] ts=6001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[STATS] reset=OK
-[TELEMETRY] ts=7001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=8001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=9000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=10001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=7000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=8000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=9001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=10000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=11000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=12001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=13001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[STATS] reset=OK
+[TELEMETRY] ts=12000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=13000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=14001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=15001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=15000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=16001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=17001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=18001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=18000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=19001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=20001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=21001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=20000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=21000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=22000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=23001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=23000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=24001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=25001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=25000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=26001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=27001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=28000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=28001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=29001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=30000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=31001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=32000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=30001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=31000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=32001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=33000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=34001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=34000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=35001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=36000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=37001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=38000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=36001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=37000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=38001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=39001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=40001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=40000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=41001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=42001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=43000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=44000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=42000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=43001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=44001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=45001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=46000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=46001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=47001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=48001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=49000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=50000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=50001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=51001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=52001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=53001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=54001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=52000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=53000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=54000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=55001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=56001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=57001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=57000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=58001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=59001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=60001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=61001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=62001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=60000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=61000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=62000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=63001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=64001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=65001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=64000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=65000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=66001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=67001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[STATS] window_ms=55280
+[LOAD] mode=BUSY_LOOP work_min_pct=7.0
+[TASK] name=UART_CMD n=0 min_us=0 avg_us=0 max_us=0
+[TASK] name=ADC n=2764 min_us=72 avg_us=72 max_us=76
+[PERIOD] name=ADC n=2763 min_us=9540 avg_us=19999 max_us=30473 jitter_max_us=10473 missed=0 late_max_ms=10 deadline_miss=0 overruns=0
+[TASK] name=IMU n=2764 min_us=1071 avg_us=1073 max_us=1076
+[PERIOD] name=IMU n=2763 min_us=10767 avg_us=19999 max_us=29254 jitter_max_us=9254 missed=0 late_max_ms=9 deadline_miss=0 overruns=0
+[TASK] name=LOGIC n=2886 min_us=71 avg_us=71 max_us=75
+[TASK] name=LED_SAMPLE n=54044 min_us=28 avg_us=33 max_us=40
+[TASK] name=TELEMETRY n=55 min_us=9123 avg_us=9140 max_us=9152
+[PERIOD] name=TELEMETRY n=54 min_us=998553 avg_us=1000002 max_us=1001406 jitter_max_us=1447 missed=0 late_max_ms=1 deadline_miss=0 overruns=0
+[TASK] name=LOOP_SAMPLE n=677386 min_us=44 avg_us=57 max_us=10615
+[TELEMETRY] ts=67098 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=68001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=69000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=70001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=71001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=72000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=73000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=74000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=72001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=73001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=74001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[MEM] stack_reserved=1024 depth_est=672 spare=352 state=MEASURED
+[MEM] heap_brk_used=1468 heap_room=8620 heap_min_reserve=512
 [TELEMETRY] ts=75001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=76001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=77001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[STATS] window_ms=70846
-[LOAD] mode=BUSY_LOOP work_min_pct=7.0
-[TASK] name=UART_CMD n=0 min_us=0 avg_us=0 max_us=0
-[TASK] name=ADC n=3542 min_us=71 avg_us=72 max_us=75
-[PERIOD] name=ADC n=3541 min_us=9531 avg_us=19999 max_us=30478 jitter_max_us=10478 missed=0 late_max_ms=10 deadline_miss=0 overruns=0
-[TASK] name=IMU n=3542 min_us=1071 avg_us=1073 max_us=1077
-[PERIOD] name=IMU n=3541 min_us=10754 avg_us=19999 max_us=29378 jitter_max_us=9378 missed=0 late_max_ms=9 deadline_miss=0 overruns=0
-[TASK] name=LOGIC n=3754 min_us=71 avg_us=71 max_us=75
-[TASK] name=LED_SAMPLE n=69406 min_us=28 avg_us=33 max_us=40
-[TASK] name=TELEMETRY n=71 min_us=9017 avg_us=9136 max_us=9153
-[PERIOD] name=TELEMETRY n=70 min_us=998562 avg_us=999979 max_us=1001405 jitter_max_us=1438 missed=0 late_max_ms=1 deadline_miss=0 overruns=0
-[TASK] name=LOOP_SAMPLE n=859961 min_us=44 avg_us=58 max_us=10611
-[TELEMETRY] ts=78000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=78001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=79001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=80000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=80001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=81001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=82001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[UART_RX] bytes=39 lines=5 overrun_events=0 long_lines=0
 [TELEMETRY] ts=83001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[MEM] stack_reserved=1024 depth_est=672 spare=352 state=MEASURED
-[MEM] heap_brk_used=1468 heap_room=8628 heap_min_reserve=512
-[TELEMETRY] ts=84000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=84001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
 [TELEMETRY] ts=85000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=86000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=87001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=88001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=89000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=90000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=91001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[UART_RX] bytes=33 lines=4 overrun_events=0 long_lines=0
-[TELEMETRY] ts=92000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=93000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=94001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=95000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=96001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=97000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
-[TELEMETRY] ts=98000 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
+[TELEMETRY] ts=86001 ms mode=ACTIVE temp=25.1C door=CLOSED ax=0 ay=0 az=1000 mg
