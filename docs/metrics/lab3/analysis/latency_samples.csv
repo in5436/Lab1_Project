@@ -1,2 +1,2 @@
 scenario,source,start_event,end_event,sample,latency_us
-S3,docs/metrics/lab3/S3.log,door_open_observed,door_response,1,54383
+S3,docs/metrics/lab3/S3.log,door_open_observed,door_response,1,55901

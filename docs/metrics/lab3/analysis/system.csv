@@ -1,4 +1,4 @@
 scenario,source,git,git_origin,window_ms,work_min_pct,stack_reserved,stack_depth_est,stack_spare,stack_state,heap_brk_used,heap_room,uart_rx_bytes,uart_rx_lines,uart_rx_overrun_events,uart_rx_long_lines,alarm_messages
-S1,docs/metrics/lab3/S1.log,94dc520d6d62,UART,70846,7.0,1024,672,352,MEASURED,1468,8628,33,4,0,0,0
-S2,docs/metrics/lab3/S2.log,94dc520d6d62,ELF_OPERATOR_ATTESTED,3600941,7.0,1024,640,384,MEASURED,1468,8628,96,15,0,0,0
-S3,docs/metrics/lab3/S3.log,94dc520d6d62,ELF_OPERATOR_ATTESTED,180980,13.5,1024,696,328,MEASURED,1468,8628,349,36,0,0,25
+S1,docs/metrics/lab3/S1.log,c1d1d3a82c1e,UART,55280,7.0,1024,672,352,MEASURED,1468,8620,39,5,0,0,0
+S2,docs/metrics/lab3/S2.log,c1d1d3a82c1e,UART,3598920,7.0,1024,672,352,MEASURED,1468,8620,108,17,0,0,0
+S3,docs/metrics/lab3/S3.log,c1d1d3a82c1e,UART,178999,12.7,1024,696,328,MEASURED,1468,8620,365,39,0,0,21

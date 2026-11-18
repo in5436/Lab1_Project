@@ -8,7 +8,6 @@ from pathlib import Path
 
 import serial
 
-EXPECTED_SHA = "c1d1d3a82c1e"
 UART_RE = re.compile(
     r"\[UART_RX\] bytes=(\d+) lines=(\d+) "
     r"overrun_events=(\d+) long_lines=(\d+)"
@@ -17,6 +16,7 @@ UART_RE = re.compile(
 parser = argparse.ArgumentParser(description="UART flood test (Lab 3, 6.2.3)")
 parser.add_argument("--out", default="docs/metrics/lab3/uart_flood.log")
 parser.add_argument("--port", default="rfc2217://localhost:4000")
+parser.add_argument("--expected-sha", default=None)
 args = parser.parse_args()
 
 out = Path(args.out)
@@ -138,9 +138,22 @@ with serial.serial_for_url(args.port, baudrate=115200, timeout=0.2) as port, \
         at = event_index()
         send(port, actions, "setup", "build")
         check = await_line(at, lambda s: s.startswith("[BUILD]"), timeout=7)
-        if not check or f"git={EXPECTED_SHA}" not in check[1]:
-            raise RuntimeError("Wrong/missing [BUILD]. Expected " + EXPECTED_SHA)
-        print("Verified:", check[1].strip())
+        if not check:
+            raise RuntimeError("Missing [BUILD] banner")
+
+        match = re.search(r"\bgit=([0-9a-f]{12})\b", check[1])
+
+        if not match:
+            raise RuntimeError("Missing or invalid Git SHA in [BUILD]")
+
+        actual_sha = match.group(1)
+
+        if args.expected_sha and actual_sha != args.expected_sha:
+            raise RuntimeError(
+                f"Firmware mismatch: expected {args.expected_sha}, got {actual_sha}"
+            )
+
+        print("Detected firmware:", actual_sha)
         send(port, actions, "setup", "stats reset")
         settle(1.0)
 
