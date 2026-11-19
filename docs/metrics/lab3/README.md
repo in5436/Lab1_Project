@@ -86,7 +86,7 @@ python3 tools/analyze_lab3.py \
 | `i2c_fault.log` | Відмова I2C під час роботи та вплив на інші задачі |
 | `breakpoint.log`, `breakpoint-actions.csv` | Поступове збільшення UART-навантаження та пошук точки зламу |
 | `uart_flood.log`, `uart_flood-actions.csv`, `uart_flood-summary.csv` | Перевірка втрат UART-команд |
-| `S3-door-latency.log`, `S3-door-latency-actions.csv` | UART-навантаження під час вимірювання реакції дверцят |
+| `door_latency_loaded.log`, `door_latency_loaded-actions.csv` | UART-навантаження під час вимірювання реакції дверцят |
 
 Записи логічного аналізатора зберігаються окремо в
 `docs/captures/lab3/` у форматі VCD.
