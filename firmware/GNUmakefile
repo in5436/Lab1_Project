@@ -46,3 +46,36 @@ $(BUILD_DIR)/rack_monitor.o: CFLAGS += -Wextra
 
 LAB3_GIT_SHA := $(shell git rev-parse --short=12 HEAD 2>/dev/null || echo unknown)
 CFLAGS += -DLAB3_BUILD_SHA=\"$(LAB3_GIT_SHA)\"
+
+FREERTOS_DIR := Middlewares/FreeRTOS/FreeRTOS-Kernel
+
+C_SOURCES += \
+$(FREERTOS_DIR)/tasks.c \
+$(FREERTOS_DIR)/queue.c \
+$(FREERTOS_DIR)/list.c \
+$(FREERTOS_DIR)/portable/GCC/ARM_CM0/port.c \
+$(FREERTOS_DIR)/portable/GCC/ARM_CM0/portasm.c \
+$(FREERTOS_DIR)/portable/MemMang/heap_4.c \
+Platform/rtos_app.c \
+Platform/hal_timebase_tim14.c
+
+C_INCLUDES += \
+-I$(FREERTOS_DIR)/include \
+-I$(FREERTOS_DIR)/portable/GCC/ARM_CM0
+
+vpath %.c \
+$(FREERTOS_DIR) \
+$(FREERTOS_DIR)/portable/GCC/ARM_CM0 \
+$(FREERTOS_DIR)/portable/MemMang
+
+OPT = -Os
+
+$(BUILD_DIR)/$(TARGET).elf: \
+    $(BUILD_DIR)/tasks.o \
+    $(BUILD_DIR)/queue.o \
+    $(BUILD_DIR)/list.o \
+    $(BUILD_DIR)/port.o \
+    $(BUILD_DIR)/portasm.o \
+    $(BUILD_DIR)/heap_4.o \
+    $(BUILD_DIR)/rtos_app.o \
+    $(BUILD_DIR)/hal_timebase_tim14.o

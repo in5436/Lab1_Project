@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "platform.h"
 #include "memory_probe.h"
+#include "rtos_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -106,6 +107,7 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   Platform_Init(&huart2, &hi2c1, &hadc1);
+  RTOS_Start();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -115,7 +117,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    Platform_Step();
   }
   /* USER CODE END 3 */
 }
