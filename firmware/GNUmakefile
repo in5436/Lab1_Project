@@ -79,3 +79,21 @@ $(BUILD_DIR)/$(TARGET).elf: \
     $(BUILD_DIR)/heap_4.o \
     $(BUILD_DIR)/rtos_app.o \
     $(BUILD_DIR)/hal_timebase_tim14.o
+
+C_SOURCES += Platform/rtos_uart.c
+
+$(BUILD_DIR)/$(TARGET).elf: $(BUILD_DIR)/rtos_uart.o
+
+$(BUILD_DIR)/rtos_uart.o: CFLAGS += -Wextra
+
+C_SOURCES += Platform/rtos_rx.c
+
+$(BUILD_DIR)/$(TARGET).elf: $(BUILD_DIR)/rtos_rx.o
+
+$(BUILD_DIR)/rtos_rx.o: CFLAGS += -Wextra
+
+C_SOURCES += Platform/rtos_imu.c
+
+$(BUILD_DIR)/$(TARGET).elf: $(BUILD_DIR)/rtos_imu.o
+
+$(BUILD_DIR)/rtos_imu.o: CFLAGS += -Wextra

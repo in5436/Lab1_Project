@@ -16,7 +16,7 @@
 
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
 #define configSUPPORT_STATIC_ALLOCATION         0
-#define configTOTAL_HEAP_SIZE                   (4096U)
+#define configTOTAL_HEAP_SIZE                   (6400U)
 #define configUSE_NEWLIB_REENTRANT              0
 
 #define configUSE_MUTEXES                      1

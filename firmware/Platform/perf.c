@@ -27,6 +27,22 @@ static volatile uint32_t s_tim3_overflows = 0U;
 static perf_stat_t s_stats[PERF_TASK_COUNT];
 static uint32_t s_stats_start_us;
 
+static perf_stat_t s_snapshot[PERF_TASK_COUNT];
+
+static uint32_t perf_lock(void)
+{
+    uint32_t state = __get_PRIMASK();
+
+    __disable_irq();
+
+    return state;
+}
+
+static void perf_unlock(uint32_t state)
+{
+    __set_PRIMASK(state);
+}
+
 static const char *const s_names[PERF_TASK_COUNT] = {
     "UART_CMD",
     "ADC",
@@ -76,39 +92,50 @@ void TIM3_IRQHandler(void)
 
 uint32_t perf_now_us(void)
 {
-    uint32_t high_before;
-    uint32_t high_after;
-    uint32_t count;
-    uint32_t flags;
+    uint32_t state = perf_lock();
 
-    do {
-        high_before = s_tim3_overflows;
-        count = TIM3->CNT & 0xFFFFU;
-        flags = TIM3->SR;
-        high_after = s_tim3_overflows;
-    } while (high_before != high_after);
+    uint32_t high = s_tim3_overflows;
+    uint32_t count = TIM3->CNT & 0xFFFFU;
 
-    if ((flags & TIM_SR_UIF) != 0U) {
+    if ((TIM3->SR & TIM_SR_UIF) != 0U) {
+        high++;
         count = TIM3->CNT & 0xFFFFU;
-        high_after++;
     }
 
-    return (high_after << 16) | count;
+    perf_unlock(state);
+
+    return (high << 16) | count;
 }
 
 void perf_stats_reset(void)
 {
+    uint32_t state = perf_lock();
+
     memset(s_stats, 0, sizeof(s_stats));
     s_stats_start_us = perf_now_us();
+
+    perf_unlock(state);
 }
 
 void perf_record(perf_task_t task, uint32_t started_us)
 {
-    uint32_t duration_us = perf_now_us() - started_us;
+    uint32_t duration_us;
+    uint32_t ended_us;
+    uint32_t state;
     perf_stat_t *s;
     uint32_t expected_us, gap_us, jitter_us;
 
     if ((unsigned)task >= (unsigned)PERF_TASK_COUNT) {
+        return;
+    }
+
+    state = perf_lock();
+
+    ended_us = perf_now_us();
+    duration_us = ended_us - started_us;
+
+    if (duration_us > (ended_us - s_stats_start_us)) {
+        perf_unlock(state);
         return;
     }
 
@@ -158,6 +185,8 @@ void perf_record(perf_task_t task, uint32_t started_us)
             s->overruns++;
         }
     }
+
+perf_unlock(state);
 }
 
 void perf_note_schedule(perf_task_t task,
@@ -165,6 +194,7 @@ void perf_note_schedule(perf_task_t task,
                         uint32_t lateness_ms)
 {
     perf_stat_t *s;
+    uint32_t state;
 
     if ((unsigned)task >= (unsigned)PERF_TASK_COUNT) {
         return;
@@ -174,6 +204,8 @@ void perf_note_schedule(perf_task_t task,
         return;
     }
 
+    state = perf_lock();
+
     s = &s_stats[task];
 
     s->missed += skipped;
@@ -181,42 +213,42 @@ void perf_note_schedule(perf_task_t task,
     if (lateness_ms > s->lateness_max_ms) {
         s->lateness_max_ms = lateness_ms;
     }
+
+    perf_unlock(state);
 }
 
 void perf_note_deadline_miss(perf_task_t task)
 {
+    uint32_t state;
+
     if ((unsigned)task >= (unsigned)PERF_TASK_COUNT) {
         return;
     }
 
+    state = perf_lock();
+
     s_stats[task].deadline_misses++;
+
+    perf_unlock(state);
 }
 
 void perf_stats_print(void)
 {
     unsigned i;
-    uint32_t window_us = perf_now_us() - s_stats_start_us;
+    uint32_t window_us;
+    uint32_t state = perf_lock();
 
-    uint64_t work_us =
-    s_stats[PERF_UART_CMD].exec_sum_us +
-    s_stats[PERF_ADC].exec_sum_us +
-    s_stats[PERF_IMU].exec_sum_us +
-    s_stats[PERF_LOGIC].exec_sum_us +
-    s_stats[PERF_TELEMETRY].exec_sum_us;
+    window_us = perf_now_us() - s_stats_start_us;
 
-    uint32_t work_permille = window_us != 0U
-        ? (uint32_t)((work_us * 1000ULL) / window_us)
-        : 0U;
+    memcpy(s_snapshot, s_stats, sizeof(s_snapshot));
+
+    perf_unlock(state);
 
     printf("[STATS] window_ms=%lu\r\n",
-           (unsigned long)(window_us / 1000U));
-
-    printf("[LOAD] mode=BUSY_LOOP work_min_pct=%lu.%lu\r\n",
-       (unsigned long)(work_permille / 10U),
-       (unsigned long)(work_permille % 10U));
+            (unsigned long)(window_us / 1000U));
 
     for (i = 0U; i < (unsigned)PERF_TASK_COUNT; ++i) {
-        const perf_stat_t *s = &s_stats[i];
+        const perf_stat_t *s = &s_snapshot[i];
 
         uint32_t avg_us = s->count != 0U
             ? (uint32_t)(s->exec_sum_us / s->count)

@@ -6,6 +6,9 @@
 #include "perf.h"
 #include "uart_stress.h"
 #include "memory_probe.h"
+#include "rtos_uart.h"
+#include "rtos_rx.h"
+#include "rtos_app.h"
 
 #ifndef LAB3_BUILD_SHA
 #define LAB3_BUILD_SHA "unknown"
@@ -23,20 +26,12 @@ static ADC_HandleTypeDef  *s_hadc  = NULL;
 static mpu6050_dev_t  s_imu;
 static rack_monitor_t s_monitor;
 
-static uint32_t s_last_imu_ms = 0U;
 static uint32_t s_last_adc_ms = 0U;
 static uint32_t s_last_telemetry_ms = 0U;
 static uint16_t s_last_adc_raw = 0U;
 static uint32_t s_door_open_seen_us = 0U;
 static bool s_door_open_pending = false;
 
-static char s_cmd_buf[32];
-static uint8_t s_cmd_len = 0U;
-static uint32_t s_uart_rx_bytes = 0U;
-static uint32_t s_uart_rx_lines = 0U;
-static uint32_t s_uart_rx_overruns = 0U;
-static uint32_t s_uart_rx_long_lines = 0U;
-static bool s_uart_drop_line = false;
 static bool s_first_imu_logged = false;
 static bool s_first_adc_logged = false;
 
@@ -235,48 +230,14 @@ static uint8_t platform_read_door_pin(void)
 
 static void platform_uart_load(uint16_t requested)
 {
-    uint8_t chunk[UART_STRESS_CHUNK];
-    uint16_t sent = 0U;
-    uint32_t start_us;
-    uint32_t elapsed_us;
-    HAL_StatusTypeDef result = HAL_OK;
-
-    uart_stress_make_chunk(chunk);
-
-    printf("[BURST] start bytes=%u\r\n",
-           (unsigned int)requested);
-
-    start_us = perf_now_us();
-
-    while (sent < requested) {
-        result = HAL_UART_Transmit(
-            s_huart,
-            chunk,
-            UART_STRESS_CHUNK,
-            200U
-        );
-
-        if (result != HAL_OK) {
-            break;
-        }
-
-        sent += UART_STRESS_CHUNK;
+    if (!RTOS_UART_RequestLoad(requested)) {
+        printf("[BURST] error=TX_QUEUE_FULL\r\n");
     }
-
-    elapsed_us = perf_now_us() - start_us;
-
-    printf("[BURST] end completed_bytes=%u duration_us=%lu status=%s\r\n",
-           (unsigned int)sent,
-           (unsigned long)elapsed_us,
-           result == HAL_OK ? "OK" : "ERROR");
 }
 
 static void platform_handle_command(const char *cmd)
 {
     uint32_t now = HAL_GetTick();
-    uint8_t who = 0U;
-    uint8_t raw[6] = {0};
-    mpu6050_accel_mg_t acc = {0, 0, 0};
 
     if (strcmp(cmd, "maint") == 0) {
         rack_monitor_set_mode(&s_monitor, RACK_MODE_MAINTENANCE);
@@ -288,23 +249,13 @@ static void platform_handle_command(const char *cmd)
         rack_monitor_clear_alarms(&s_monitor);
         printf("[INFO] ts=%lu ms alarms_cleared=1\r\n", (unsigned long)now);
     } else if (strcmp(cmd, "probe") == 0) {
-        s_imu.dev_addr = MPU6050_ADDR_DEFAULT;
-        if ((mpu6050_read_id(&s_imu, &who) == MPU6050_OK) &&
-            (mpu6050_read_accel_mg(&s_imu, &acc, raw) == MPU6050_OK)) {
-            printf("[PROBE] addr=0x%02X who_am_i=0x%02X raw=%02X%02X_%02X%02X_%02X%02X ax=%d ay=%d az=%d mg\r\n",
-                   (unsigned int)s_imu.dev_addr, (unsigned int)who,
-                   (unsigned int)raw[0], (unsigned int)raw[1],
-                   (unsigned int)raw[2], (unsigned int)raw[3],
-                   (unsigned int)raw[4], (unsigned int)raw[5],
-                   (int)acc.x_mg, (int)acc.y_mg, (int)acc.z_mg);
-        } else {
-            printf("[PROBE] addr=0x%02X result=ERROR\r\n", (unsigned int)s_imu.dev_addr);
+        if (!RTOS_IMU_Request(RTOS_IMU_PROBE)) {
+            printf("[PROBE] error=QUEUE_FULL\r\n");
         }
+
     } else if (strcmp(cmd, "sim_nack") == 0) {
-        s_imu.dev_addr = MPU6050_ADDR_ALT;
-        if (mpu6050_read_id(&s_imu, &who) != MPU6050_OK) {
-            printf("[FAULT] ts=%lu ms bus=I2C1 addr=0x%02X error=NACK\r\n",
-                   (unsigned long)now, (unsigned int)s_imu.dev_addr);
+        if (!RTOS_IMU_Request(RTOS_IMU_SIM_NACK)) {
+            printf("[FAULT] error=QUEUE_FULL\r\n");
         }
         s_imu.dev_addr = MPU6050_ADDR_DEFAULT;
     } else if (strcmp(cmd, "build") == 0) {
@@ -324,22 +275,31 @@ static void platform_handle_command(const char *cmd)
         printf("[STATS] reset=OK\r\n");
 
     } else if (strcmp(cmd, "stats") == 0) {
+        RTOS_UART_SetDiagnostic(1U);
         perf_stats_print();
+        RTOS_UART_SetDiagnostic(0U);
 
     } else if (strcmp(cmd, "uart stats") == 0) {
-        printf("[UART_RX] bytes=%lu lines=%lu overrun_events=%lu long_lines=%lu\r\n",
-               (unsigned long)s_uart_rx_bytes,
-               (unsigned long)s_uart_rx_lines,
-               (unsigned long)s_uart_rx_overruns,
-               (unsigned long)s_uart_rx_long_lines);
+    rtos_rx_stats_t stats;
+
+    RTOS_RX_GetStats(&stats);
+
+    printf("[UART_RX] bytes=%lu lines=%lu overrun_events=%lu long_lines=%lu ring_dropped=%lu cmd_dropped=%lu\r\n",
+           (unsigned long)stats.bytes,
+           (unsigned long)stats.lines,
+           (unsigned long)stats.overrun_events,
+           (unsigned long)stats.long_lines,
+           (unsigned long)stats.ring_dropped,
+           (unsigned long)stats.cmd_dropped);
+
+    printf("[UART_TX] dropped=%lu\r\n",
+       (unsigned long)RTOS_UART_GetDropped());
 
     } else if (strcmp(cmd, "uart reset") == 0) {
-        s_uart_rx_bytes = 0U;
-        s_uart_rx_lines = 0U;
-        s_uart_rx_overruns = 0U;
-        s_uart_rx_long_lines = 0U;
+        RTOS_RX_ResetStats();
+        RTOS_UART_ResetDropped();
 
-        printf("[UART_RX] reset=OK\r\n");
+        printf("[UART_RX] reset=OK\r\n");;
 
     } else if (strncmp(cmd, "load", 4U) == 0 &&
                (cmd[4] == ' ' || cmd[4] == '\0')) {
@@ -352,7 +312,12 @@ static void platform_handle_command(const char *cmd)
         }
 
     } else if (strcmp(cmd, "mem") == 0) {
+        RTOS_UART_SetDiagnostic(1U);
+
         memory_probe_print();
+        RTOS_PrintMemory();
+
+        RTOS_UART_SetDiagnostic(0U);
 
     } else if (strcmp(cmd, "status") == 0) {
         printf("[STATUS] ts=%lu ms mode=%s temp=%d.%dC door=%s ax=%d ay=%d az=%d mg alarms=%lu\r\n",
@@ -370,56 +335,23 @@ static void platform_handle_command(const char *cmd)
 
 static void platform_poll_uart_rx(void)
 {
-    uint8_t ch;
+    char command[RTOS_RX_CMD_SIZE];
+    uint8_t processed = 0U;
 
-    while (s_huart != NULL) {
-        uint32_t flags = s_huart->Instance->ISR;
+    while (processed < 2U &&
+           RTOS_RX_GetCommand(command)) {
+        uint32_t started_us;
 
-        /* Апаратне переповнення приймача */
-        if ((flags & USART_ISR_ORE) != 0U) {
-            s_uart_rx_overruns++;
-            s_huart->Instance->ICR = USART_ICR_ORECF;
+        if (strcmp(command, "stats") == 0 ||
+            strcmp(command, "stats reset") == 0) {
+            platform_handle_command(command);
+        } else {
+            started_us = perf_now_us();
+            platform_handle_command(command);
+            perf_record(PERF_UART_CMD, started_us);
         }
 
-        if ((flags & USART_ISR_RXNE_RXFNE) == 0U) {
-            break;
-        }
-
-        ch = (uint8_t)(s_huart->Instance->RDR & 0xFFU);
-        s_uart_rx_bytes++;
-
-        if ((ch == '\r') || (ch == '\n')) {
-            if ((s_cmd_len > 0U) || s_uart_drop_line) {
-                s_uart_rx_lines++;
-
-                if (!s_uart_drop_line) {
-                    uint32_t start_us;
-
-                    s_cmd_buf[s_cmd_len] = '\0';
-
-                    if ((strcmp(s_cmd_buf, "stats") == 0) ||
-                        (strcmp(s_cmd_buf, "stats reset") == 0)) {
-                        platform_handle_command(s_cmd_buf);
-                    } else {
-                        start_us = perf_now_us();
-
-                        platform_handle_command(s_cmd_buf);
-
-                        perf_record(PERF_UART_CMD, start_us);
-                    }
-                }
-
-                s_cmd_len = 0U;
-                s_uart_drop_line = false;
-            }
-        } else if (!s_uart_drop_line) {
-            if (s_cmd_len < (sizeof(s_cmd_buf) - 1U)) {
-                s_cmd_buf[s_cmd_len++] = (char)ch;
-            } else {
-                s_uart_drop_line = true;
-                s_uart_rx_long_lines++;
-            }
-        }
+        processed++;
     }
 }
 
@@ -493,6 +425,72 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
            ((imu_sample_ok && adc_ok) ? "OK" : "FAIL"));
 }
 
+bool Platform_ImuRead(mpu6050_accel_mg_t *accel)
+{
+    static uint32_t last_reinit_ms = 0U;
+    bool ok;
+
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
+
+    ok = mpu6050_read_accel_mg(
+        &s_imu,
+        accel,
+        NULL
+    ) == MPU6050_OK;
+
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
+
+    if (!ok &&
+        (HAL_GetTick() - last_reinit_ms) >= 500U) {
+
+        reg_bus_t bus = s_imu.bus;
+
+        last_reinit_ms = HAL_GetTick();
+
+        (void)mpu6050_init(
+            &s_imu,
+            &bus,
+            MPU6050_ADDR_DEFAULT
+        );
+    }
+
+    return ok;
+}
+
+void Platform_ImuCommand(
+    rtos_imu_command_t command,
+    rtos_imu_reply_t *reply)
+{
+    uint8_t who = 0U;
+
+    memset(reply, 0, sizeof(*reply));
+
+    reply->command = command;
+
+    if (command == RTOS_IMU_PROBE) {
+        s_imu.dev_addr = MPU6050_ADDR_DEFAULT;
+        reply->addr = s_imu.dev_addr;
+
+        if (mpu6050_read_id(&s_imu, &who) == MPU6050_OK &&
+            mpu6050_read_accel_mg(
+                &s_imu,
+                &reply->accel,
+                reply->raw) == MPU6050_OK) {
+
+            reply->success = 1U;
+            reply->who = who;
+        }
+    } else if (command == RTOS_IMU_SIM_NACK) {
+        s_imu.dev_addr = MPU6050_ADDR_ALT;
+        reply->addr = s_imu.dev_addr;
+
+        reply->success =
+            mpu6050_read_id(&s_imu, &who) != MPU6050_OK;
+
+        s_imu.dev_addr = MPU6050_ADDR_DEFAULT;
+    }
+}
+
 void Platform_Step(void)
 {
     static uint32_t s_last_sample_ms = 0U;
@@ -502,7 +500,7 @@ void Platform_Step(void)
     uint32_t task_started_us;
 
     bool sample_loop = (now != s_last_sample_ms);
-    bool need_update = false;
+    bool need_update = true;
     bool adc_sample_ok = false;
     bool imu_ok = s_monitor.imu_online;
 
@@ -551,45 +549,49 @@ void Platform_Step(void)
         }
     }
 
-    now = HAL_GetTick();
+    {
+    rtos_imu_sample_t sample;
+    rtos_imu_reply_t reply;
 
-    if ((now - s_last_imu_ms) >= IMU_POLL_PERIOD_MS) {
-        uint32_t elapsed_ms = now - s_last_imu_ms;
-        uint32_t due = elapsed_ms / IMU_POLL_PERIOD_MS;
-        uint32_t lateness_ms = elapsed_ms - IMU_POLL_PERIOD_MS;
-
-        s_last_imu_ms += due * IMU_POLL_PERIOD_MS;
-
-        perf_note_schedule(
-            PERF_IMU,
-            due - 1U,
-            lateness_ms
-        );
-
-        task_started_us = perf_now_us();
-
-        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
-
-        if (mpu6050_read_accel_mg(&s_imu, &acc, NULL) == MPU6050_OK) {
-            imu_ok = true;
-        } else {
-            imu_ok = false;
-        }
-
-        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
-
-        perf_record(PERF_IMU, task_started_us);
-        need_update = true;
-
-        if ((int32_t)(HAL_GetTick() -
-            (s_last_imu_ms + IMU_POLL_PERIOD_MS)) > 0) {
-            perf_note_deadline_miss(PERF_IMU);
-        }
+    if (RTOS_IMU_GetSample(&sample)) {
+        imu_ok = sample.ok != 0U;
 
         if (imu_ok) {
-            platform_log_first_sample("MPU6050", &s_first_imu_logged);
+            acc = sample.accel;
+            platform_log_first_sample(
+                "MPU6050",
+                &s_first_imu_logged
+            );
         }
     }
+
+    while (RTOS_IMU_GetReply(&reply)) {
+        if (reply.command == RTOS_IMU_PROBE) {
+            if (reply.success) {
+                printf("[PROBE] addr=0x%02X who_am_i=0x%02X raw=%02X%02X_%02X%02X_%02X%02X ax=%d ay=%d az=%d mg\r\n",
+                       (unsigned int)reply.addr,
+                       (unsigned int)reply.who,
+                       (unsigned int)reply.raw[0],
+                       (unsigned int)reply.raw[1],
+                       (unsigned int)reply.raw[2],
+                       (unsigned int)reply.raw[3],
+                       (unsigned int)reply.raw[4],
+                       (unsigned int)reply.raw[5],
+                       (int)reply.accel.x_mg,
+                       (int)reply.accel.y_mg,
+                       (int)reply.accel.z_mg);
+            } else {
+                printf("[PROBE] addr=0x%02X result=ERROR\r\n",
+                       (unsigned int)reply.addr);
+            }
+        } else if (reply.command == RTOS_IMU_SIM_NACK &&
+                   reply.success) {
+            printf("[FAULT] ts=%lu ms bus=I2C1 addr=0x%02X error=NACK\r\n",
+                   (unsigned long)HAL_GetTick(),
+                   (unsigned int)reply.addr);
+        }
+    }
+}
 
     if (need_update) {
         uint8_t door_pin;

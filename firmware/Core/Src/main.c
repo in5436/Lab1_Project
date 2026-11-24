@@ -26,6 +26,9 @@
 #include "platform.h"
 #include "memory_probe.h"
 #include "rtos_app.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "rtos_uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -66,10 +69,22 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int _write(int fd, char *p, int n) {
-  (void)fd;
-  HAL_UART_Transmit(&huart2, (uint8_t*)p, (uint16_t)n, HAL_MAX_DELAY);
-  return n;
+int _write(int fd, char *p, int n)
+{
+    (void)fd;
+
+    if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+        return RTOS_UART_Write(p, n);
+    }
+
+    HAL_UART_Transmit(
+        &huart2,
+        (uint8_t *)p,
+        (uint16_t)n,
+        HAL_MAX_DELAY
+    );
+
+    return n;
 }
 /* USER CODE END 0 */
 
@@ -107,7 +122,7 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   Platform_Init(&huart2, &hi2c1, &hadc1);
-  RTOS_Start();
+  RTOS_Start(&huart2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
