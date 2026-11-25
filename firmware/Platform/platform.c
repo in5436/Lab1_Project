@@ -257,7 +257,6 @@ static void platform_handle_command(const char *cmd)
         if (!RTOS_IMU_Request(RTOS_IMU_SIM_NACK)) {
             printf("[FAULT] error=QUEUE_FULL\r\n");
         }
-        s_imu.dev_addr = MPU6050_ADDR_DEFAULT;
     } else if (strcmp(cmd, "build") == 0) {
         printf("[BUILD] git=%s clock_hz=%lu baud=115200\r\n",
                LAB3_BUILD_SHA,
