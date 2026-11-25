@@ -422,6 +422,8 @@ void Platform_Init(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, ADC_Handl
 
     printf("System Init %s | Mode=ACTIVE | Commands: build, status, maint, active, clear, probe, sim_nack, perf, stats, stats reset, load 256, load 1024, load 4096, uart stats, uart reset, mem\r\n",
            ((imu_sample_ok && adc_ok) ? "OK" : "FAIL"));
+    
+    s_last_adc_ms = HAL_GetTick();
 }
 
 bool Platform_ImuRead(mpu6050_accel_mg_t *accel)

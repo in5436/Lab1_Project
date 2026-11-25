@@ -50,8 +50,14 @@ void HAL_ResumeTick(void)
 
 void TIM14_IRQHandler(void)
 {
+    uint32_t state = __get_PRIMASK();
+
+    __disable_irq();
+
     if ((TIM14->SR & TIM_SR_UIF) != 0U) {
         TIM14->SR = ~TIM_SR_UIF;
         HAL_IncTick();
     }
+
+    __set_PRIMASK(state);
 }

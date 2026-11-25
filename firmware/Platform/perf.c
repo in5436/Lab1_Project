@@ -1,7 +1,8 @@
 #include "perf.h"
-#include "stm32c0xx.h"
+#include "stm32c0xx_hal.h"
 #include <stdio.h>
 #include <string.h>
+#include "FreeRTOS.h"
 
 typedef struct {
     uint32_t count;
@@ -23,7 +24,11 @@ typedef struct {
     uint32_t deadline_misses;
 } perf_stat_t;
 
-static volatile uint32_t s_tim3_overflows = 0U;
+static uint32_t s_last_us = 0U;
+static volatile uint32_t s_tick_us = 0U;
+static volatile uint8_t s_tick_ready = 0U;
+static uint32_t s_timer_backwards = 0U;
+static uint32_t s_stats_start_ms = 0U;
 static perf_stat_t s_stats[PERF_TASK_COUNT];
 static uint32_t s_stats_start_us;
 
@@ -59,52 +64,66 @@ static const uint32_t s_periods_us[PERF_TASK_COUNT] = {
 
 void perf_init(void)
 {
-    RCC->APBENR1 |= RCC_APBENR1_TIM3EN;
-    (void)RCC->APBENR1;
-
-    TIM3->CR1 = 0U;
-    TIM3->PSC = (SystemCoreClock / 1000000U) - 1U;
-    TIM3->ARR = 0xFFFFU;
-    TIM3->CNT = 0U;
-
-    TIM3->EGR = TIM_EGR_UG;
-    TIM3->SR = 0U;
-
-    s_tim3_overflows = 0U;
-    TIM3->DIER = TIM_DIER_UIE;
-
-    NVIC_SetPriority(TIM3_IRQn, 2U);
-    NVIC_ClearPendingIRQ(TIM3_IRQn);
-    NVIC_EnableIRQ(TIM3_IRQn);
-
-    TIM3->CR1 = TIM_CR1_CEN;
+    s_last_us = 0U;
+    s_tick_us = 0U;
+    s_tick_ready = 0U;
 
     perf_stats_reset();
 }
 
-void TIM3_IRQHandler(void)
+void vApplicationTickHook(void)
 {
-    if ((TIM3->SR & TIM_SR_UIF) != 0U) {
-        TIM3->SR = ~TIM_SR_UIF;
-        s_tim3_overflows++;
+    if (s_tick_ready == 0U) {
+        s_tick_us = HAL_GetTick() * 1000U;
+        s_tick_ready = 1U;
+    } else {
+        s_tick_us += 1000000U / configTICK_RATE_HZ;
     }
 }
 
 uint32_t perf_now_us(void)
 {
     uint32_t state = perf_lock();
+    uint32_t result;
 
-    uint32_t high = s_tim3_overflows;
-    uint32_t count = TIM3->CNT & 0xFFFFU;
+    if (s_tick_ready == 0U) {
+        result = HAL_GetTick() * 1000U;
+    } else {
+        uint32_t pending_before;
+        uint32_t pending_after;
+        uint32_t value;
 
-    if ((TIM3->SR & TIM_SR_UIF) != 0U) {
-        high++;
-        count = TIM3->CNT & 0xFFFFU;
+        do {
+            pending_before =
+                SCB->ICSR & SCB_ICSR_PENDSTSET_Msk;
+
+            value = SysTick->VAL;
+
+            pending_after =
+                SCB->ICSR & SCB_ICSR_PENDSTSET_Msk;
+
+        } while (pending_before != pending_after);
+
+        result = s_tick_us;
+
+        if (pending_after != 0U) {
+            result += 1000000U / configTICK_RATE_HZ;
+        }
+
+        if (value != 0U) {
+            result += (SysTick->LOAD + 1U - value) / 48U;
+        }
     }
+
+    if ((int32_t)(result - s_last_us) < 0) {
+        s_timer_backwards++;
+    }
+
+    s_last_us = result;
 
     perf_unlock(state);
 
-    return (high << 16) | count;
+    return result;
 }
 
 void perf_stats_reset(void)
@@ -112,7 +131,10 @@ void perf_stats_reset(void)
     uint32_t state = perf_lock();
 
     memset(s_stats, 0, sizeof(s_stats));
+
     s_stats_start_us = perf_now_us();
+    s_stats_start_ms = HAL_GetTick();
+    s_timer_backwards = 0U;
 
     perf_unlock(state);
 }
@@ -236,16 +258,24 @@ void perf_stats_print(void)
 {
     unsigned i;
     uint32_t window_us;
+    uint32_t hal_window_ms;
+    uint32_t backwards;
     uint32_t state = perf_lock();
 
     window_us = perf_now_us() - s_stats_start_us;
+    hal_window_ms = HAL_GetTick() - s_stats_start_ms;
+    backwards = s_timer_backwards;
 
     memcpy(s_snapshot, s_stats, sizeof(s_snapshot));
 
     perf_unlock(state);
 
     printf("[STATS] window_ms=%lu\r\n",
-            (unsigned long)(window_us / 1000U));
+        (unsigned long)(window_us / 1000U));
+
+    printf("[TIME] hal_window_ms=%lu backward_reads=%lu\r\n",
+        (unsigned long)hal_window_ms,
+        (unsigned long)backwards);
 
     for (i = 0U; i < (unsigned)PERF_TASK_COUNT; ++i) {
         const perf_stat_t *s = &s_snapshot[i];
